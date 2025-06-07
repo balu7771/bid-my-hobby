@@ -1,13 +1,43 @@
+# Server configuration
+server:
+  port: 8080
+
+# Spring configuration
 spring:
-  kafka:
-    bootstrap-servers: host.docker.internal:9092
-    properties:
-      schema.registry.url: http://localhost:8081
-      specific.avro.reader: true
-    producer:
-      key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: io.confluent.kafka.serializers.KafkaAvroSerializer
-    consumer:
-      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: io.confluent.kafka.serializers.KafkaAvroDeserializer
-      group-id: bid-my-hobby-consumer
+  application:
+    name: bid-my-hobby
+  data:
+    mongodb:
+      host: localhost
+      port: 27017
+      database: mydatabase
+      username: root
+      password: secret
+  
+# Actuator configuration
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always
+  info:
+    env:
+      enabled: true
+
+# Scality/S3 Configuration
+scality:
+  access:
+    key: ${SCALITY_ACCESS_KEY:scality_access_key}
+  secret:
+    key: ${SCALITY_SECRET_KEY:scality_secret_key}
+  bucket:
+    name: hobby-images-9-5-25
+  endpoint: https://s3.amazonaws.com
+
+# OpenAI Configuration
+openai:
+  api:
+    key: ${OPENAI_API_KEY:openai_hobby_api_key}
