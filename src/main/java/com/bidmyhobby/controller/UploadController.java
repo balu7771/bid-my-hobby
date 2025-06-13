@@ -1,34 +1,12 @@
+// This file is deprecated. All upload functionality has been consolidated into BidController.uploadItem()
+// Please use /api/bid/uploadItem endpoint instead
 package com.bidmyhobby.controller;
 
-import com.bidmyhobby.service.ModerationService;
-import com.bidmyhobby.service.ScalityStorageService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api")
 public class UploadController {
-
-    @Autowired
-    private ModerationService moderationService;
-
-    @Autowired
-    private ScalityStorageService scalityStorageService;
-
-    @PostMapping("/upload")
-    public ResponseEntity<?> uploadImage(@RequestParam("image") MultipartFile image,
-                                         @RequestParam("title") String title,
-                                         @RequestParam("description") String description) {
-        try {
-            //boolean isSafe = moderationService.moderateText(title + "\n" + description);
-            //if (!isSafe) return ResponseEntity.badRequest().body("Content not allowed.");
-
-            String imageUrl = scalityStorageService.uploadFile(image);
-            return ResponseEntity.ok().body("Uploaded successfully: " + imageUrl);
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().body("Upload failed: " + e.getMessage());
-        }
-    }
+    // Functionality moved to BidController.uploadItem()
 }

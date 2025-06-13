@@ -1,20 +1,42 @@
 package com.bidmyhobby.service;
 
-import com.bidmyhobby.kafka.BidEventProducer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.util.UUID;
+import java.util.Map;
 
 @Service
 public class BidService {
 
     @Autowired
-    private BidEventProducer bidEventProducer;
+    private S3StorageService s3StorageService;
+    
+    @Autowired
+    private NotificationService notificationService;
 
-    public void placeBid(String itemId, String userId, BigDecimal amount) {
-        String bidId = UUID.randomUUID().toString();
-        bidEventProducer.publishBidEvent(bidId, userId, itemId, amount.doubleValue());
+    public void placeBid(String itemId, String email, BigDecimal amount) {
+        placeBid(itemId, email, amount, "USD");
+    }
+    
+    public void placeBid(String itemId, String email, BigDecimal amount, String currency) {
+        try {
+            // Get item metadata to validate bid
+            Map<String, Object> itemMetadata = s3StorageService.getItemMetadata(itemId);
+            String itemName = (String) itemMetadata.get("name");
+            
+            // Check if item exists
+            if (itemName == null || itemName.equals("Unknown Item")) {
+                throw new RuntimeException("Item not found");
+            }
+            
+            // Save bid metadata
+            s3StorageService.saveBidMetadata(itemId, email, amount.doubleValue(), currency);
+            
+            // Send notification to item creator
+            notificationService.notifyAboutNewBid(itemId, itemName, amount.doubleValue());
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to place bid: " + e.getMessage(), e);
+        }
     }
 }

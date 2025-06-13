@@ -6,13 +6,11 @@ server:
 spring:
   application:
     name: bid-my-hobby
-  data:
-    mongodb:
-      host: localhost
-      port: 27017
-      database: mydatabase
-      username: root
-      password: secret
+  main:
+    allow-bean-definition-overriding: true
+  docker:
+    compose:
+      enabled: false
   
 # Actuator configuration
 management:
@@ -27,15 +25,20 @@ management:
     env:
       enabled: true
 
-# Scality/S3 Configuration
-scality:
-  access:
-    key: ${SCALITY_ACCESS_KEY:scality_access_key}
-  secret:
-    key: ${SCALITY_SECRET_KEY:scality_secret_key}
-  bucket:
-    name: hobby-images-9-5-25
-  endpoint: https://s3.amazonaws.com
+# AWS Configuration
+aws:
+  s3:
+    access-key: ${AWS_ACCESS_KEY:your-access-key}
+    secret-key: ${AWS_SECRET_KEY:your-secret-key}
+    region: ${AWS_REGION:us-east-1}
+    bucket:
+      name: ${AWS_BUCKET_NAME:hobby-images-bucket}
+      metadata-prefix: metadata/
+      images-prefix: images/
+      users-prefix: users/
+  ses:
+    region: ${AWS_SES_REGION:${AWS_REGION:us-east-1}}
+    from-email: ${AWS_SES_FROM_EMAIL:noreply@bidmyhobby.com}
 
 # OpenAI Configuration
 openai:
