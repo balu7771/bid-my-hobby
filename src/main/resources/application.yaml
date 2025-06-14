@@ -44,3 +44,8 @@ aws:
 openai:
   api:
     key: ${OPENAI_API_KEY:openai_hobby_api_key}
+
+# Admin key
+admin:
+  secret:
+    key: ${ADMIN_SECRET_KEY:your-admin-secret-key}

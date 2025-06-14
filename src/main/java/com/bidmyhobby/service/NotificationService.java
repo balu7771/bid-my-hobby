@@ -77,7 +77,7 @@ public class NotificationService {
                              "Someone placed a new bid on your item!\n\n" +
                              "Item: " + itemName + "\n" +
                              "Bid Amount: $" + bidAmount + "\n\n" +
-                             "Visit our site to see all bids!");
+                             "To see all bids and bidder details, please verify your email by visiting our site.");
                 } catch (Exception e) {
                     logger.error("Failed to send bid notification to {}: {}", creatorEmail, e.getMessage());
                     // Don't throw exception to prevent bid failure
@@ -86,6 +86,30 @@ public class NotificationService {
         } catch (Exception e) {
             logger.error("Failed to send bid notification: {}", e.getMessage());
             // Don't throw exception to prevent bid failure
+        }
+    }
+    
+    public void sendVerificationEmail(String email, String token) {
+        if (!emailEnabled) {
+            logger.info("Email notifications disabled. Would have sent verification email to: {}", email);
+            return;
+        }
+        
+        try {
+            String verificationLink = "https://bidmyhobby.com/api/bid/verifyAndGetBids/" + token;
+            
+            sendEmail(email,
+                     "Verify Email to View Bids on Your Item",
+                     "Please verify your email to view all bids on your item.\n\n" +
+                     "Click the link below to verify your email and view all bid details:\n" +
+                     verificationLink + "\n\n" +
+                     "This link will expire after use or within 24 hours.\n\n" +
+                     "If you did not request this, please ignore this email.");
+            
+            logger.info("Verification email sent to: {}", email);
+        } catch (Exception e) {
+            logger.error("Failed to send verification email to {}: {}", email, e.getMessage());
+            throw new RuntimeException("Failed to send verification email", e);
         }
     }
     
@@ -126,5 +150,9 @@ public class NotificationService {
             logger.error("Error sending email to {}: {}", toEmail, e.getMessage());
             throw e; // Re-throw to be handled by calling methods
         }
+    }
+
+    public void sendSubscriptionConfirmation(String email) {
+
     }
 }
