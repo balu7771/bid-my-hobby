@@ -1,0 +1,94 @@
+.bid-verification-container {
+  max-width: 900px;
+  margin: 2rem auto;
+  padding: 2rem;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.verification-header {
+  margin-bottom: 2rem;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 1rem;
+}
+
+.verification-header h2 {
+  color: #2c3e50;
+  margin-bottom: 1rem;
+}
+
+.item-details {
+  margin-bottom: 1.5rem;
+}
+
+.item-details p {
+  margin: 0.5rem 0;
+}
+
+.bids-table-container {
+  overflow-x: auto;
+  margin-bottom: 2rem;
+}
+
+.bids-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+}
+
+.bids-table th,
+.bids-table td {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid #eee;
+}
+
+.bids-table th {
+  background-color: #f8f9fa;
+  font-weight: 600;
+  color: #495057;
+}
+
+.bids-table tr:hover {
+  background-color: #f8f9fa;
+}
+
+.no-bids-message {
+  padding: 2rem;
+  text-align: center;
+  color: #6c757d;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+  margin-bottom: 2rem;
+}
+
+.back-link {
+  margin-top: 2rem;
+  text-align: center;
+}
+
+.back-link a {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  background-color: #3498db;
+  color: white;
+  text-decoration: none;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.back-link a:hover {
+  background-color: #2980b9;
+}
+
+.error-container {
+  padding: 2rem;
+  text-align: center;
+  color: #721c24;
+  background-color: #f8d7da;
+  border: 1px solid #f5c6cb;
+  border-radius: 4px;
+  margin: 2rem auto;
+  max-width: 600px;
+}

@@ -1,0 +1,108 @@
+.bids-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.bid-count {
+  margin-bottom: 1rem;
+  padding: 0.5rem;
+  background-color: rgba(var(--primary-color-rgb), 0.1);
+  border-radius: var(--border-radius-md);
+  text-align: center;
+  font-weight: 500;
+}
+
+.bid-count-number {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--primary-color);
+}
+
+.bid-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  border-radius: var(--border-radius-md);
+  background-color: var(--background-color);
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.2s ease;
+  animation: slideIn 0.3s ease-out;
+}
+
+.bid-item:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.bid-amount {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--accent-dark);
+}
+
+.bid-details {
+  text-align: right;
+}
+
+.bid-user {
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.bid-time {
+  font-size: 0.8rem;
+  color: var(--text-light);
+}
+
+.no-bids-message {
+  text-align: center;
+  padding: 2rem;
+  color: var(--text-light);
+  font-style: italic;
+}
+
+.loading-spinner {
+  text-align: center;
+  padding: 2rem;
+}
+
+.view-bids-button {
+  width: 100%;
+  background-color: var(--secondary-color);
+  margin-bottom: 0.5rem;
+}
+
+.view-bids-button:hover {
+  background-color: var(--secondary-dark);
+}
+
+.bid-badge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background-color: var(--primary-color);
+  color: white;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: 700;
+  box-shadow: var(--shadow-sm);
+  z-index: 5;
+}

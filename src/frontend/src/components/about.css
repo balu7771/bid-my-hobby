@@ -1,0 +1,93 @@
+.about-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem;
+  background-color: var(--card-background);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-md);
+}
+
+.about-container h2 {
+  color: var(--primary-color);
+  font-family: var(--heading-font);
+  margin-bottom: 2rem;
+  text-align: center;
+  font-size: 2.2rem;
+}
+
+.about-section {
+  margin-bottom: 2.5rem;
+}
+
+.about-section h3 {
+  color: var(--secondary-color);
+  font-family: var(--heading-font);
+  margin-bottom: 1rem;
+  font-size: 1.5rem;
+  border-bottom: 2px solid var(--accent-color);
+  padding-bottom: 0.5rem;
+  display: inline-block;
+}
+
+.about-section p {
+  margin-bottom: 1rem;
+  line-height: 1.6;
+}
+
+.feature-list {
+  list-style: none;
+  padding: 0;
+  margin: 1.5rem 0;
+}
+
+.feature-list li {
+  display: flex;
+  margin-bottom: 1.5rem;
+  align-items: flex-start;
+}
+
+.feature-icon {
+  font-size: 2rem;
+  margin-right: 1rem;
+  background-color: rgba(var(--accent-color-rgb), 0.2);
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.feature-list li div {
+  flex: 1;
+}
+
+.feature-list li strong {
+  display: block;
+  margin-bottom: 0.25rem;
+  color: var(--text-color);
+  font-size: 1.1rem;
+}
+
+.feature-list li p {
+  margin: 0;
+  color: var(--text-light);
+}
+
+.contact-info {
+  background-color: var(--background-color);
+  padding: 1rem;
+  border-radius: var(--border-radius-md);
+  text-align: center;
+}
+
+.contact-info a {
+  color: var(--primary-color);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.contact-info a:hover {
+  text-decoration: underline;
+}

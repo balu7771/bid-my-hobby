@@ -1,0 +1,52 @@
+.ai-description {
+  margin-top: 1rem;
+  padding: 1rem;
+  background-color: rgba(var(--secondary-color-rgb), 0.1);
+  border-radius: var(--border-radius-md);
+  border-left: 3px solid var(--secondary-color);
+  font-size: 0.9rem;
+  color: var(--text-color);
+  line-height: 1.5;
+}
+
+.ai-description-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: var(--secondary-dark);
+}
+
+.ai-description-icon {
+  font-size: 1.2rem;
+}
+
+.ai-description-toggle {
+  background: none;
+  border: none;
+  color: var(--secondary-color);
+  font-size: 0.85rem;
+  padding: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  margin-left: auto;
+}
+
+.ai-description-toggle:hover {
+  color: var(--secondary-dark);
+  text-decoration: underline;
+  transform: none;
+  box-shadow: none;
+}
+
+.ai-description-content {
+  max-height: 100px;
+  overflow-y: auto;
+  transition: max-height 0.3s ease;
+}
+
+.ai-description-content.expanded {
+  max-height: 300px;
+}

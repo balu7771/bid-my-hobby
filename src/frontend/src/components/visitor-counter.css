@@ -1,0 +1,40 @@
+.visitor-counter {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background-color: var(--primary-color);
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 30px;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  box-shadow: var(--shadow-md);
+  z-index: 100;
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+.visitor-icon {
+  font-size: 1.2rem;
+}
+
+.visitor-count {
+  font-weight: 700;
+}
+
+.visitor-label {
+  font-size: 0.8rem;
+  opacity: 0.9;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
