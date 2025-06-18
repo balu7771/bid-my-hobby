@@ -16,7 +16,8 @@ function PublicBidsModal({ item, onClose }) {
         }
         
         const data = await response.json();
-        setBids(data.bids || []);
+        // Handle both formats: direct array or nested in 'bids' property
+        setBids(Array.isArray(data) ? data : (data.bids || []));
       } catch (err) {
         console.error('Error fetching bids:', err);
         setError(err.message);

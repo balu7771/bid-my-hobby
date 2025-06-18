@@ -62,7 +62,7 @@ function BidAccessModal({ item, onClose }) {
           ) : (
             <form onSubmit={handleSubmit}>
               <div className="form-group">
-                <label htmlFor="creatorEmail">Verify you're the creator:</label>
+                <label htmlFor="creatorEmail">Enter your email to verify:</label>
                 <input
                   type="email"
                   id="creatorEmail"
@@ -72,7 +72,7 @@ function BidAccessModal({ item, onClose }) {
                   required
                 />
                 <small className="form-note">
-                  We'll send a verification link to this email if it matches the creator's email
+                  If your email matches the creator's email, you'll receive a verification link to view detailed bids with unmasked emails
                 </small>
               </div>
               

@@ -360,6 +360,17 @@ public class S3StorageService {
             for (S3Object s3Object : listResponse.contents()) {
                 try {
                     Map<String, Object> bidData = getJsonFromS3(s3Object.key());
+                    
+                    // Ensure the userId field contains the bidder's email
+                    // This is important to prevent mixing with creator's email
+                    if (bidData.containsKey("userId")) {
+                        // The userId field already contains the bidder's email
+                        // No need to modify it
+                    } else {
+                        // If userId is missing, mark it as unknown
+                        bidData.put("userId", "Unknown");
+                    }
+                    
                     bids.add(bidData);
                 } catch (Exception e) {
                     // Skip invalid bid data

@@ -2,6 +2,7 @@ package com.bidmyhobby.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -197,6 +198,20 @@ public class BidController {
         }
     }
     
+
+    @Operation(summary = "Get bids for an item (deprecated)")
+    @ApiResponse(responseCode = "200", description = "Success")
+    @GetMapping(value = "/getBids/{itemId:.+}", produces = "application/json")
+    public ResponseEntity<?> getBidsDeprecated(@PathVariable(value = "itemId") String itemId) {
+        try {
+            List<Map<String, Object>> bids = bidService.getBidsForItem(itemId);
+            return ResponseEntity.ok().body(bids);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.OK).body(
+                Map.of("error", "Error retrieving bids: " + e.getMessage()));
+        }
+    }
+
     @Operation(summary = "Subscribe to notifications")
     @ApiResponse(responseCode = "200", description = "Subscription successful")
     @PostMapping("/subscribe")
@@ -277,11 +292,11 @@ public class BidController {
             return ResponseEntity.badRequest().body("Error deleting item: " + e.getMessage());
         }
     }
-    
+
     @Operation(summary = "Get bids for an item")
     @ApiResponse(responseCode = "200", description = "Bids retrieved successfully")
-    @GetMapping("/getBids/{itemId}")
-    public ResponseEntity<?> getBids(@PathVariable String itemId) {
+    @GetMapping("/getBids")
+    public ResponseEntity<?> getBids(@RequestParam String itemId, @RequestParam(required = false) String email) {
         try {
             // Get item metadata
             Map<String, Object> metadata = s3StorageService.getItemMetadata(itemId);
@@ -299,8 +314,16 @@ public class BidController {
                     .body("This item is no longer available");
             }
             
-            // Get bids with public details (masked emails)
-            List<Map<String, Object>> bids = s3StorageService.getPublicBidsForItem(itemId);
+            List<Map<String, Object>> bids;
+            
+            // If email is provided and matches the creator's email, return full details
+            if (email != null && email.equals(metadata.get("email"))) {
+                // Get bids with full details (including emails)
+                bids = s3StorageService.getBidsForItem(itemId);
+            } else {
+                // Get bids with public details (masked emails)
+                bids = s3StorageService.getPublicBidsForItem(itemId);
+            }
             
             // Return just the bids list
             return ResponseEntity.ok().body(bids);
@@ -311,8 +334,8 @@ public class BidController {
     
     @Operation(summary = "Get item details with bids")
     @ApiResponse(responseCode = "200", description = "Item details with bids retrieved successfully")
-    @GetMapping("/getItemWithBids/{itemId}")
-    public ResponseEntity<?> getItemWithBids(@PathVariable String itemId) {
+    @GetMapping("/getItemWithBids")
+    public ResponseEntity<?> getItemWithBids(@RequestParam String itemId) {
         try {
             // Get item metadata
             Map<String, Object> metadata = s3StorageService.getItemMetadata(itemId);
@@ -406,6 +429,14 @@ public class BidController {
             
             // Get bids with full details (including emails)
             List<Map<String, Object>> bids = s3StorageService.getBidsForItem(itemId);
+            
+            // Ensure we're not mixing emails - each bid should have its own bidder's email
+            for (Map<String, Object> bid : bids) {
+                // Make sure userId field contains the actual bidder's email, not the creator's email
+                if (!bid.containsKey("userId") || bid.get("userId") == null) {
+                    bid.put("userId", "Unknown");
+                }
+            }
             
             // Create response with item and bid details
             Map<String, Object> response = new HashMap<>();

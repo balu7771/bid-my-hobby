@@ -3,7 +3,7 @@ import { ENDPOINTS } from '../api/apiConfig';
 import BidModal from './BidModal';
 import ImageModal from './ImageModal';
 import ItemActionModal from './ItemActionModal';
-import BidAccessModal from './BidAccessModal';
+import DetailedBidsModal from './DetailedBidsModal';
 import PublicBidsModal from './PublicBidsModal';
 import { mockItems, getMockImageUrl } from './MockData';
 import './ai-description.css';
@@ -213,11 +213,8 @@ function ItemList() {
                   )}
                 </button>
                 
-                {/* Show management buttons for the item creator */}
-                {(item.email === localStorage.getItem('userEmail') || 
-                  item.email === 'bidmyhobby@gmail.com' || 
-                  item.userId === 'user123') && 
-                  item.status === 'ACTIVE' && (
+                {/* Show management buttons for all active items */}
+                {item.status === 'ACTIVE' && (
                   <div className="management-buttons">
                     <button 
                       className="view-bids-button"
@@ -271,7 +268,7 @@ function ItemList() {
       )}
 
       {bidAccessItem && (
-        <BidAccessModal
+        <DetailedBidsModal
           item={bidAccessItem}
           onClose={() => setBidAccessItem(null)}
         />

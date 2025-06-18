@@ -6,7 +6,7 @@ function AboutPage() {
       <h2>About Bid My Hobby</h2>
       
       <section className="about-section">
-        <h3>Our Mission</h3>
+        <h3>My Mission</h3>
         <p>
           Bid My Hobby was created with a simple mission: to connect passionate hobbyists 
           and collectors with others who appreciate their craft. We provide a platform where 
@@ -62,15 +62,11 @@ function AboutPage() {
       <section className="about-section">
         <h3>Our Story</h3>
         <p>
-          Bid My Hobby started as a passion project by a group of hobbyists who wanted 
-          to create a dedicated space for sharing their creations. What began as a small 
-          community has grown into a vibrant marketplace connecting creators and collectors 
-          worldwide.
+          Bid My Hobby started as an idea I posted on social media. Slowly I got interest when the AI tools like
+           Copilot and ChatGPT were release. This project moved at speed when I started using Amazon Q.
         </p>
         <p>
-          We believe that hobbies are more than just pastimes—they're expressions of 
-          creativity, skill, and passion. Our platform celebrates the dedication that 
-          goes into every handcrafted item and the joy of finding something truly unique.
+          More about me can be found at : Instagram ID @ Balu.reelz or Search me in LinkedIn @ Balaji Mudipalli
         </p>
       </section>
       
@@ -80,7 +76,7 @@ function AboutPage() {
           Have questions or suggestions? We'd love to hear from you!
         </p>
         <p className="contact-info">
-          Email: <a href="mailto:contact@bidmyhobby.com">contact@bidmyhobby.com</a>
+          Email: <a href="mailto:contact@bidmyhobby.com">bidmyhobby@gmail.com</a>
         </p>
       </section>
     </div>

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { ENDPOINTS } from '../api/apiConfig';
 
 function ItemActionModal({ item, actionType, onClose, onActionComplete }) {
-  const [email, setEmail] = useState(item.email || '');
+  const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 

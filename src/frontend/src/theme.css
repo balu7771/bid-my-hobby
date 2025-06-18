@@ -1,20 +1,20 @@
 :root {
   /* Color palette with RGB values for transparency */
-  --primary-color: #6c5ce7;
-  --primary-color-rgb: 108, 92, 231;
-  --primary-dark: #5649c0;
-  --secondary-color: #00cec9;
-  --secondary-color-rgb: 0, 206, 201;
-  --secondary-dark: #00a8a3;
-  --accent-color: #fdcb6e;
-  --accent-color-rgb: 253, 203, 110;
-  --accent-dark: #f0b94d;
+  --primary-color: #ff7e67;
+  --primary-color-rgb: 255, 126, 103;
+  --primary-dark: #e86a55;
+  --secondary-color: #4ecdc4;
+  --secondary-color-rgb: 78, 205, 196;
+  --secondary-dark: #3db9b0;
+  --accent-color: #ffd166;
+  --accent-color-rgb: 255, 209, 102;
+  --accent-dark: #ebbe50;
   --text-color: #2d3436;
   --text-light: #636e72;
-  --background-color: #f9f9f9;
+  --background-color: #f7f9fc;
   --card-background: #ffffff;
-  --success-color: #00b894;
-  --error-color: #d63031;
+  --success-color: #06d6a0;
+  --error-color: #ef476f;
   --border-color: #dfe6e9;
   
   /* Typography */

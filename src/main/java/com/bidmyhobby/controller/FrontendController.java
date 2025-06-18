@@ -14,8 +14,4 @@ public class FrontendController {
         return "forward:/index.html";
     }
 
-//    @RequestMapping(value = "/**/{[path:[^\\.]*}")
-//    public String redirect() {
-//        return "forward:/index.html";
-//    }
 }

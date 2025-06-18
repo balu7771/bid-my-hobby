@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -37,6 +38,14 @@ public class BidService {
             notificationService.notifyAboutNewBid(itemId, itemName, amount.doubleValue());
         } catch (Exception e) {
             throw new RuntimeException("Failed to place bid: " + e.getMessage(), e);
+        }
+    }
+    
+    public List<Map<String, Object>> getBidsForItem(String itemId) {
+        try {
+            return s3StorageService.getBidsForItem(itemId);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to get bids: " + e.getMessage(), e);
         }
     }
 }
