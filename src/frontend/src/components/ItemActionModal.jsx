@@ -1,15 +1,31 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ENDPOINTS } from '../api/apiConfig';
 
 function ItemActionModal({ item, actionType, onClose, onActionComplete }) {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [userEmail, setUserEmail] = useState('');
+  const [autoVerified, setAutoVerified] = useState(false);
+
+  useEffect(() => {
+    const savedEmail = localStorage.getItem('userEmail');
+    if (savedEmail) {
+      setUserEmail(savedEmail);
+      setEmail(savedEmail);
+      // Auto-verify if user email matches creator email
+      if (savedEmail === item.email) {
+        setAutoVerified(true);
+      }
+    }
+  }, [item.email]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (!email) {
+    const emailToUse = autoVerified ? userEmail : email;
+    
+    if (!emailToUse) {
       setError('Please enter your email for verification');
       return;
     }
@@ -19,7 +35,7 @@ function ItemActionModal({ item, actionType, onClose, onActionComplete }) {
 
     try {
       let response;
-      const queryParams = new URLSearchParams({ email });
+      const queryParams = new URLSearchParams({ email: emailToUse });
       
       if (actionType === 'delete') {
         // Extract just the filename part from the path
@@ -82,22 +98,29 @@ function ItemActionModal({ item, actionType, onClose, onActionComplete }) {
           {error && <div className="error-message">{error}</div>}
           
           <form onSubmit={handleSubmit}>
-            <div className="form-group">
-              <label htmlFor="verifyEmail">
-                Verify your email:
-              </label>
-              <input
-                type="email"
-                id="verifyEmail"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Enter your email for verification"
-                required
-              />
-              <small className="form-note">
-                Please enter the email you used when creating this item
-              </small>
-            </div>
+            {autoVerified ? (
+              <div className="auto-verified-message">
+                <p>✓ Verified as creator: {userEmail}</p>
+                <p className="action-description">{actionDescription}</p>
+              </div>
+            ) : (
+              <div className="form-group">
+                <label htmlFor="verifyEmail">
+                  Verify your email:
+                </label>
+                <input
+                  type="email"
+                  id="verifyEmail"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Enter your email for verification"
+                  required
+                />
+                <small className="form-note">
+                  Please enter the email you used when creating this item
+                </small>
+              </div>
+            )}
             
             <div className="modal-actions">
               <button type="button" onClick={onClose} disabled={loading}>

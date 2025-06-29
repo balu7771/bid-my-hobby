@@ -51,7 +51,7 @@ function BidModal({ item, onClose, onBidPlaced }) {
           itemId: item.itemId,
           userId: 'user123', // In a real app, this would come from authentication
           bidAmount: parseFloat(bidAmount),
-          currency: item.currency || 'USD',
+          currency: 'INR', // Always INR
           email: bidderEmail
         }),
       });
@@ -84,11 +84,11 @@ function BidModal({ item, onClose, onBidPlaced }) {
           <form onSubmit={handleSubmit}>
             <div className="form-group">
               <label htmlFor="bidAmount">
-                Your Bid Amount ({item.currency || 'USD'}):
+                Your Bid Amount (INR only):
               </label>
               <div className="bid-input-container">
                 <span className="currency-prefix">
-                  {currencySymbol}
+                  ₹
                 </span>
                 <input
                   type="number"
@@ -103,7 +103,14 @@ function BidModal({ item, onClose, onBidPlaced }) {
               </div>
               {item.basePrice && (
                 <div className="base-price-note">
-                  Base price: {currencySymbol}{item.basePrice} {item.currency}
+                  Base price: ₹{item.basePrice} INR
+                  {item.currencyConversions && (
+                    <div className="reference-prices">
+                      <small>
+                        (≈ ${item.currencyConversions.USD} USD | £{item.currencyConversions.GBP} GBP)
+                      </small>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

@@ -16,10 +16,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import com.bidmyhobby.service.AIService;
 import com.bidmyhobby.service.BidService;
+import com.bidmyhobby.service.CurrencyService;
 import com.bidmyhobby.service.ImageService;
 import com.bidmyhobby.service.ModerationService;
 import com.bidmyhobby.service.NotificationService;
+import com.bidmyhobby.service.PaymentService;
 import com.bidmyhobby.service.S3StorageService;
 
 @RestController
@@ -40,6 +43,15 @@ public class BidController {
     
     @Autowired
     private ModerationService moderationService;
+    
+    @Autowired
+    private AIService aiService;
+    
+    @Autowired
+    private PaymentService paymentService;
+    
+    @Autowired
+    private CurrencyService currencyService;
     
     @Value("${admin.secret.key:default-admin-key}")
     private String adminSecretKey;
@@ -96,12 +108,15 @@ public class BidController {
                     "This item is no longer available for bidding");
             }
             
-            // Check if bid amount is greater than base price
-            // Note: In a real app, you would convert currencies if they don't match
-            if (currency.equals(itemCurrency) && bidAmount.compareTo(basePrice) <= 0) {
+            // All bids must be in INR and greater than base price
+            if (!"INR".equals(currency)) {
                 return ResponseEntity.badRequest().body(
-                    "Bid amount must be greater than the base price of " + 
-                    basePrice + " " + itemCurrency);
+                    "All bids must be in INR currency only");
+            }
+            
+            if (bidAmount.compareTo(basePrice) <= 0) {
+                return ResponseEntity.badRequest().body(
+                    "Bid amount must be greater than the base price of ₹" + basePrice);
             }
             
             bidService.placeBid(itemId, email, bidAmount, currency);
@@ -120,7 +135,10 @@ public class BidController {
             @RequestParam("description") String description,
             @RequestParam("email") String email,
             @RequestParam("basePrice") BigDecimal basePrice,
-            @RequestParam("currency") String currency) {
+            @RequestParam("currency") String currency,
+            @RequestParam(value = "city", required = false) String city,
+            @RequestParam(value = "instagram", required = false) String instagram,
+            @RequestParam(value = "website", required = false) String website) {
         try {
             String imageDescription = "";
             boolean isAppropriate = true;
@@ -154,6 +172,36 @@ public class BidController {
                     .body("The image does not appear to be a hobby item. Only hobby items can be uploaded.");
             }
             
+            // Check price limits - no items above 10000 INR
+            if (basePrice.compareTo(new BigDecimal("10000")) > 0) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of(
+                        "error", "Price limit exceeded",
+                        "reason", "Maximum price allowed is ₹10,000. Please reduce the price.",
+                        "maxPrice", 10000,
+                        "userPrice", basePrice
+                    ));
+            }
+            
+            // Validate price against AI estimate
+            Map<String, Object> priceValidation = aiService.validatePriceAndEstimate(basePrice, name, description);
+            
+            if (!(Boolean) priceValidation.get("isValid")) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of(
+                        "error", "Price validation failed",
+                        "reason", priceValidation.get("reason"),
+                        "aiEstimate", priceValidation.get("aiEstimate"),
+                        "userPrice", priceValidation.get("userPrice")
+                    ));
+            }
+            
+            // Get AI analysis for category
+            Map<String, Object> aiAnalysis = aiService.analyzeItemForPriceAndCategory(file, description, name);
+            
+            // Get currency conversions
+            Map<String, Double> currencyConversions = currencyService.convertFromINR(basePrice.doubleValue());
+            
             // Add watermark to image with masked email
             String maskedEmail = imageService.maskEmail(email);
             byte[] watermarkedImage = imageService.addWatermark(file, "© " + maskedEmail);
@@ -168,10 +216,26 @@ public class BidController {
             metadata.put("description", description);
             metadata.put("email", email);
             metadata.put("basePrice", basePrice);
-            metadata.put("currency", currency);
+            metadata.put("currency", "INR"); // Always INR for base price
+            metadata.put("currencyConversions", currencyConversions);
             metadata.put("timestamp", System.currentTimeMillis());
             metadata.put("status", "ACTIVE");
             metadata.put("aiDescription", imageDescription);
+            metadata.put("category", aiAnalysis.get("category"));
+            metadata.put("estimatedPrice", aiAnalysis.get("estimatedPrice"));
+            metadata.put("priceConfidence", aiAnalysis.get("confidence"));
+            if (city != null && !city.trim().isEmpty()) metadata.put("city", city.trim());
+            if (instagram != null && !instagram.trim().isEmpty()) metadata.put("instagram", instagram.trim());
+            if (website != null && !website.trim().isEmpty()) metadata.put("website", website.trim());
+            
+            // Calculate platform fee for items between 3000-10000 INR
+            if (basePrice.compareTo(new BigDecimal("3000")) >= 0 && basePrice.compareTo(new BigDecimal("10000")) <= 0) {
+                BigDecimal platformFee = basePrice.multiply(new BigDecimal("0.1")).setScale(0, java.math.RoundingMode.HALF_UP);
+                metadata.put("platformFee", platformFee);
+                metadata.put("requiresPlatformFee", true);
+            } else {
+                metadata.put("requiresPlatformFee", false);
+            }
             
             s3StorageService.saveItemMetadata(itemId, metadata);
             
@@ -189,10 +253,19 @@ public class BidController {
             // Send notifications to all subscribed users (won't throw exception)
             notificationService.notifyAboutNewItem(itemId, name, description);
             
-            return ResponseEntity.ok().body(Map.of(
-                "message", "Item uploaded successfully",
-                "itemId", itemId
-            ));
+            Map<String, Object> response = new HashMap<>();
+            response.put("message", "Item uploaded successfully");
+            response.put("itemId", itemId);
+            
+            // Add platform fee information if applicable
+            if (basePrice.compareTo(new BigDecimal("3000")) >= 0 && basePrice.compareTo(new BigDecimal("10000")) <= 0) {
+                BigDecimal platformFee = basePrice.multiply(new BigDecimal("0.1")).setScale(0, java.math.RoundingMode.HALF_UP);
+                response.put("platformFee", platformFee);
+                response.put("requiresPlatformFee", true);
+                response.put("feeMessage", "Platform fee of ₹" + platformFee + " (10%) applies to items in this price range.");
+            }
+            
+            return ResponseEntity.ok().body(response);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body("Error uploading item: " + e.getMessage());
         }
@@ -490,6 +563,79 @@ public class BidController {
             System.err.println("Error marking item as sold: " + e.getMessage());
             e.printStackTrace();
             return ResponseEntity.badRequest().body("Error marking item as sold: " + e.getMessage());
+        }
+    }
+    
+    @Operation(summary = "Mark an item as not for sale")
+    @ApiResponse(responseCode = "200", description = "Item marked as not for sale successfully")
+    @PostMapping("/markNotForSale/{itemId}")
+    public ResponseEntity<?> markNotForSale(
+            @PathVariable String itemId,
+            @RequestParam("email") String email) {
+        try {
+            Map<String, Object> metadata = s3StorageService.getItemMetadata(itemId);
+            
+            if (metadata == null || metadata.get("name").equals("Unknown Item")) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Item not found");
+            }
+            
+            String creatorEmail = (String) metadata.get("email");
+            if (creatorEmail == null || !creatorEmail.equals(email)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body("Only the creator can mark this item as not for sale");
+            }
+            
+            metadata.put("status", "NOT_FOR_SALE");
+            metadata.put("notForSaleAt", System.currentTimeMillis());
+            
+            String originalItemId = (String) metadata.get("itemId");
+            s3StorageService.saveItemMetadata(originalItemId, metadata);
+            
+            return ResponseEntity.ok().body("Item marked as not for sale successfully");
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Error marking item as not for sale: " + e.getMessage());
+        }
+    }
+    
+    @Operation(summary = "Like an item")
+    @ApiResponse(responseCode = "200", description = "Item liked successfully")
+    @PostMapping("/likeItem/{itemId}")
+    public ResponseEntity<?> likeItem(
+            @PathVariable String itemId,
+            @RequestParam("email") String email) {
+        try {
+            // Accept any identifier for likes (email or guest ID)
+            s3StorageService.likeItem(itemId, email);
+            return ResponseEntity.ok().body("Item liked successfully");
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Error liking item: " + e.getMessage());
+        }
+    }
+    
+    @Operation(summary = "Unlike an item")
+    @ApiResponse(responseCode = "200", description = "Item unliked successfully")
+    @PostMapping("/unlikeItem/{itemId}")
+    public ResponseEntity<?> unlikeItem(
+            @PathVariable String itemId,
+            @RequestParam("email") String email) {
+        try {
+            // Accept any identifier for unlikes (email or guest ID)
+            s3StorageService.unlikeItem(itemId, email);
+            return ResponseEntity.ok().body("Item unliked successfully");
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Error unliking item: " + e.getMessage());
+        }
+    }
+    
+    @Operation(summary = "Get creator's items")
+    @ApiResponse(responseCode = "200", description = "Creator items retrieved successfully")
+    @GetMapping("/creatorItems")
+    public ResponseEntity<?> getCreatorItems(@RequestParam("email") String email) {
+        try {
+            List<Map<String, Object>> items = s3StorageService.getItemsByCreator(email);
+            return ResponseEntity.ok().body(items);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Error retrieving creator items: " + e.getMessage());
         }
     }
 }

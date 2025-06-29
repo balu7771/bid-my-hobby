@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
-import ItemList from './components/ItemList';
+import EnhancedItemList from './components/EnhancedItemList';
 import ItemUpload from './components/ItemUpload';
 import UserEmailSetter from './components/UserEmailSetter';
 import BidVerificationPage from './components/BidVerificationPage';
-import ChatWithAI from './components/ChatWithAI';
+import EnhancedChatWithAI from './components/EnhancedChatWithAI';
 import AboutPage from './components/AboutPage';
 import VisitorCounter from './components/VisitorCounter';
 import './App.css';
@@ -13,6 +13,9 @@ import './components/BidAccessModal.css';
 import './components/chat.css';
 import './components/about.css';
 import './components/visitor-counter.css';
+import './components/enhanced-features.css';
+import './components/creator-payment.css';
+import './components/mobile-upload.css';
 
 function App() {
   const [activeTab, setActiveTab] = useState('browse');
@@ -46,7 +49,10 @@ function App() {
                   <li>
                     <button 
                       className={activeTab === 'upload' ? 'active' : ''} 
-                      onClick={() => setActiveTab('upload')}
+                      onClick={() => {
+                        console.log('Share Your Creation clicked');
+                        setActiveTab('upload');
+                      }}
                     >
                       Share Your Creation
                     </button>
@@ -63,9 +69,9 @@ function App() {
               </nav>
               
               <main className="app-main">
-                {activeTab === 'browse' && <ItemList />}
+                {activeTab === 'browse' && <EnhancedItemList />}
                 {activeTab === 'upload' && <ItemUpload />}
-                {activeTab === 'chat' && <ChatWithAI />}
+                {activeTab === 'chat' && <EnhancedChatWithAI />}
               </main>
             </>
           } />

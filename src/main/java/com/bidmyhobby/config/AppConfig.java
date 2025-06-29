@@ -1,7 +1,9 @@
 package com.bidmyhobby.config;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.web.client.RestTemplate;
 
 @Configuration
 @ConfigurationProperties
@@ -55,5 +57,10 @@ public class AppConfig {
 
     public void setScalityBucketName(String scalityBucketName) {
         this.scalityBucketName = scalityBucketName;
+    }
+    
+    @Bean
+    public RestTemplate restTemplate() {
+        return new RestTemplate();
     }
 }

@@ -47,6 +47,7 @@ function ItemList() {
   const [useMockData, setUseMockData] = useState(false);
   const [bidAccessItem, setBidAccessItem] = useState(null);
   const [publicBidsItem, setPublicBidsItem] = useState(null);
+  const [userEmail, setUserEmail] = useState('');
 
   const fetchItems = async () => {
     try {
@@ -69,6 +70,10 @@ function ItemList() {
   };
 
   useEffect(() => {
+    const email = localStorage.getItem('userEmail');
+    if (email) {
+      setUserEmail(email);
+    }
     fetchItems();
   }, []);
 
@@ -185,10 +190,17 @@ function ItemList() {
               )}
               {item.basePrice && (
                 <div className="price-display">
-                  <span className="currency-symbol">
-                    {getCurrencySymbol(item.currency)}
-                  </span>
-                  {item.basePrice} {item.currency}
+                  <div className="primary-price">
+                    <span className="currency-symbol">₹</span>
+                    {item.basePrice} INR
+                  </div>
+                  {item.currencyConversions && (
+                    <div className="reference-prices">
+                      <small>
+                        ≈ ${item.currencyConversions.USD} USD | £{item.currencyConversions.GBP} GBP
+                      </small>
+                    </div>
+                  )}
                 </div>
               )}
               <div className="item-actions">
@@ -213,8 +225,8 @@ function ItemList() {
                   )}
                 </button>
                 
-                {/* Show management buttons for all active items */}
-                {item.status === 'ACTIVE' && (
+                {/* Show management buttons only for creator's items when email is set */}
+                {item.status === 'ACTIVE' && userEmail && userEmail === item.email && (
                   <div className="management-buttons">
                     <button 
                       className="view-bids-button"

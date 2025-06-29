@@ -1,16 +1,32 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ENDPOINTS } from '../api/apiConfig';
+import CreatorPaymentModal from './CreatorPaymentModal';
+import './mobile-upload.css';
 
 function ItemUpload() {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [email, setEmail] = useState('');
   const [basePrice, setBasePrice] = useState('');
-  const [currency, setCurrency] = useState('USD');
+  const [currency, setCurrency] = useState('INR');
+  const [city, setCity] = useState('');
+  const [instagram, setInstagram] = useState('');
+  const [website, setWebsite] = useState('');
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState(null);
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [paymentData, setPaymentData] = useState(null);
+  const [uploadedItemId, setUploadedItemId] = useState(null);
+
+  // Auto-populate email from localStorage
+  useEffect(() => {
+    const savedEmail = localStorage.getItem('userEmail');
+    if (savedEmail) {
+      setEmail(savedEmail);
+    }
+  }, []);
 
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
@@ -31,8 +47,15 @@ function ItemUpload() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (!file || !title || !description || !email || !basePrice || !currency) {
-      setMessage('Please fill all fields and select an image');
+    if (!file || !title || !email || !basePrice || !currency) {
+      setMessage('Please fill all required fields and select an image');
+      return;
+    }
+
+    // Check price limits
+    const price = parseFloat(basePrice);
+    if (price > 10000) {
+      setMessage('Error: Maximum price allowed is ₹10,000. Please reduce the price.');
       return;
     }
 
@@ -56,6 +79,10 @@ function ItemUpload() {
       basePrice: basePrice,
       currency: currency
     });
+    
+    if (city.trim()) queryParams.append('city', city.trim());
+    if (instagram.trim()) queryParams.append('instagram', instagram.trim());
+    if (website.trim()) queryParams.append('website', website.trim());
 
     try {
       const response = await fetch(`${ENDPOINTS.UPLOAD_ITEM}?${queryParams}`, {
@@ -76,22 +103,38 @@ function ItemUpload() {
       }
       
       if (response.ok) {
-        setMessage('Item uploaded successfully!');
-        setTitle('');
-        setDescription('');
-        setEmail('');
-        setBasePrice('');
-        setCurrency('USD');
-        setFile(null);
-        setPreview(null);
+        let responseData;
+        try {
+          responseData = await response.json();
+        } catch (e) {
+          responseData = { message: 'Item uploaded successfully', itemId: 'unknown' };
+        }
+        const price = parseFloat(basePrice);
+        
+        setUploadedItemId(responseData.itemId);
+        
+        // Check if platform fee is required (3000-10000 INR)
+        if (responseData.requiresPlatformFee) {
+          setMessage(`Item uploaded successfully! ${responseData.feeMessage}`);
+          
+          // Show payment modal for platform fee
+          setTimeout(() => {
+            handlePlatformFeePayment(responseData.itemId);
+          }, 2000);
+        } else {
+          setMessage('Item uploaded successfully!');
+          clearForm();
+        }
       } else {
         // Handle specific error messages for image moderation
         if (data.message && data.message.includes('inappropriate content')) {
           setMessage('Error: The image contains inappropriate content and cannot be uploaded.');
         } else if (data.message && data.message.includes('not appear to be a hobby item')) {
           setMessage('Error: The image does not appear to be a hobby item. Only hobby items can be uploaded.');
+        } else if (data.error && data.error.includes('Price validation failed')) {
+          setMessage(`Error: ${data.reason}`);
         } else {
-          setMessage(`Error: ${data.message || 'Failed to upload item'}`);
+          setMessage(`Error: ${data.message || data.error || 'Failed to upload item'}`);
         }
       }
     } catch (error) {
@@ -101,14 +144,71 @@ function ItemUpload() {
     }
   };
 
+  const clearForm = () => {
+    setTitle('');
+    setDescription('');
+    setEmail('');
+    setBasePrice('');
+    setCurrency('INR');
+    setCity('');
+    setInstagram('');
+    setWebsite('');
+    setFile(null);
+    setPreview(null);
+  };
+
+  const handlePlatformFeePayment = async (itemId) => {
+    try {
+      const response = await fetch('/api/payment/createCreatorPayment', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          itemId: itemId,
+          creatorEmail: email
+        })
+      });
+
+      if (response.ok) {
+        const paymentOrder = await response.json();
+        setPaymentData({
+          ...paymentOrder,
+          creatorEmail: email
+        });
+        setShowPaymentModal(true);
+      } else {
+        const errorText = await response.text();
+        setMessage(`Error creating payment order: ${errorText}`);
+      }
+    } catch (error) {
+      setMessage(`Error: ${error.message}`);
+    }
+  };
+
+  const handlePaymentSuccess = () => {
+    setMessage('Platform fee payment successful! Your item is now fully active.');
+    clearForm();
+    setShowPaymentModal(false);
+    setPaymentData(null);
+    setUploadedItemId(null);
+  };
+
+  const handlePaymentCancel = () => {
+    setShowPaymentModal(false);
+    setPaymentData(null);
+    setMessage('Payment cancelled. Your item is uploaded but platform fee is pending.');
+  };
+
   return (
     <div className="upload-container">
       <h2>Share Your Hobby Creation</h2>
       {message && <div className={message.includes('Error') ? 'error-message' : 'success-message'}>{message}</div>}
       
       <form onSubmit={handleSubmit}>
+        {/* Mandatory Fields */}
         <div className="form-group">
-          <label htmlFor="title">Title:</label>
+          <label htmlFor="title">Title: *</label>
           <input
             type="text"
             id="title"
@@ -120,18 +220,26 @@ function ItemUpload() {
         </div>
         
         <div className="form-group">
-          <label htmlFor="description">Description:</label>
-          <textarea
-            id="description"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder="Tell us about your hobby item"
+          <label htmlFor="basePrice">Base Price (INR only): *</label>
+          <input
+            type="number"
+            id="basePrice"
+            value={basePrice}
+            onChange={(e) => setBasePrice(e.target.value)}
+            placeholder="Starting price in ₹"
+            min="100"
+            max="10000"
+            step="50"
             required
           />
+          <small className="form-note">
+            Note: Maximum price allowed is ₹10,000. Items between ₹3,000-₹10,000 require a 10% platform fee.
+            Price will be validated against AI estimate. USD & GBP equivalents will be shown for reference.
+          </small>
         </div>
         
         <div className="form-group">
-          <label htmlFor="email">Email:</label>
+          <label htmlFor="email">Email: *</label>
           <input
             type="email"
             id="email"
@@ -143,66 +251,82 @@ function ItemUpload() {
           <small className="form-note">Note: Your email will be partially masked in the watermark</small>
         </div>
         
-        <div className="form-group price-currency-group">
-          <div className="price-field">
-            <label htmlFor="basePrice">Base Price:</label>
-            <input
-              type="number"
-              id="basePrice"
-              value={basePrice}
-              onChange={(e) => setBasePrice(e.target.value)}
-              placeholder="Starting price"
-              min="0.01"
-              step="0.01"
-              required
-            />
-          </div>
-          
-          <div className="currency-field">
-            <label htmlFor="currency">Currency:</label>
-            <select
-              id="currency"
-              value={currency}
-              onChange={(e) => setCurrency(e.target.value)}
-              required
-            >
-              <option value="USD">USD ($)</option>
-              <option value="GBP">GBP (£)</option>
-              <option value="INR">INR (₹)</option>
-            </select>
-          </div>
+        {/* Optional Fields */}
+        <div className="form-group">
+          <label htmlFor="description">Description (Optional):</label>
+          <textarea
+            id="description"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="Tell us about your hobby item"
+          />
         </div>
         
         <div className="form-group">
-          <label htmlFor="image">Image:</label>
+          <label htmlFor="city">City (Optional):</label>
+          <input
+            type="text"
+            id="city"
+            value={city}
+            onChange={(e) => setCity(e.target.value)}
+            placeholder="Your city"
+          />
+        </div>
+        
+        <div className="form-group">
+          <label htmlFor="instagram">Instagram (Optional):</label>
+          <input
+            type="url"
+            id="instagram"
+            value={instagram}
+            onChange={(e) => setInstagram(e.target.value)}
+            placeholder="https://instagram.com/yourhandle"
+            onFocus={(e) => {
+              if (!e.target.value) {
+                setInstagram('https://instagram.com/');
+              }
+            }}
+          />
+        </div>
+        
+        <div className="form-group">
+          <label htmlFor="website">Website (Optional):</label>
+          <input
+            type="url"
+            id="website"
+            value={website}
+            onChange={(e) => setWebsite(e.target.value)}
+            placeholder="https://yourwebsite.com"
+          />
+        </div>
+        
+        <div className="form-group">
+          <label htmlFor="image">Image: *</label>
           <div className="file-input-container">
-            <input
-              type="file"
-              id="image"
-              accept="image/*"
-              onChange={handleFileChange}
-              className="file-input"
-              capture="environment"
-              required
-            />
             <div className="upload-buttons">
-              <label htmlFor="image" className="file-input-label">
-                Choose File
+              <input
+                type="file"
+                id="camera"
+                accept="image/*"
+                onChange={handleFileChange}
+                className="file-input mobile-camera"
+                capture="environment"
+              />
+              <label htmlFor="camera" className="camera-input-label mobile-primary">
+                📷 Take Photo
               </label>
-              <div className="camera-button-container">
-                <label htmlFor="camera" className="camera-input-label">
-                  Take Photo
-                </label>
-                <small className="mobile-only-note">Works on mobile devices</small>
-                <input
-                  type="file"
-                  id="camera"
-                  accept="image/*"
-                  onChange={handleFileChange}
-                  className="file-input"
-                  capture="user"
-                />
-              </div>
+              
+              <input
+                type="file"
+                id="gallery"
+                accept="image/*"
+                onChange={handleFileChange}
+                className="file-input desktop-gallery"
+                required
+              />
+              <label htmlFor="gallery" className="file-input-label desktop-primary">
+                📁 Choose from Gallery
+              </label>
             </div>
             <span className="file-name">
               {file ? file.name : 'No file selected'}
@@ -223,6 +347,15 @@ function ItemUpload() {
           {loading ? 'Uploading...' : 'Share Your Creation'}
         </button>
       </form>
+      
+      {showPaymentModal && paymentData && (
+        <CreatorPaymentModal
+          isOpen={showPaymentModal}
+          onClose={handlePaymentCancel}
+          paymentData={paymentData}
+          onSuccess={handlePaymentSuccess}
+        />
+      )}
     </div>
   );
 }

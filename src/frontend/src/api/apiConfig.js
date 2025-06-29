@@ -12,11 +12,16 @@ const DEFAULT_HEADERS = {
 
 // API endpoints
 const ENDPOINTS = {
+  BASE: '/api/bid',
   ITEMS: '/api/bid/allItems',
   UPLOAD_ITEM: '/api/bid/uploadItem',
   PLACE_BID: '/api/bid/placeBid',
   DELETE_ITEM: (itemId) => `/api/bid/deleteItem/${itemId}`,
   MARK_AS_SOLD: (itemId) => `/api/bid/markAsSold/${itemId}`,
+  MARK_NOT_FOR_SALE: (itemId) => `/api/bid/markNotForSale/${itemId}`,
+  LIKE_ITEM: (itemId) => `/api/bid/likeItem/${itemId}`,
+  UNLIKE_ITEM: (itemId) => `/api/bid/unlikeItem/${itemId}`,
+  CREATOR_ITEMS: '/api/bid/creatorItems',
   SUBSCRIBE: '/api/bid/subscribe',
   HEALTH: '/api/health',
   HEALTH_STATUS: '/api/health/status',

@@ -28,6 +28,12 @@ public class S3StorageService {
 
     @Value("${aws.s3.bucket.users-prefix:users/}")
     private String usersPrefix;
+    
+    @Value("${aws.s3.bucket.payments-prefix:payments/}")
+    private String paymentsPrefix;
+    
+    @Value("${aws.s3.bucket.sales-prefix:sales/}")
+    private String salesPrefix;
 
     public S3StorageService(S3Client s3Client) {
         this.s3Client = s3Client;
@@ -326,6 +332,9 @@ public class S3StorageService {
                         // Get public bids for this item (with masked emails)
                         List<Map<String, Object>> bids = getPublicBidsForItem(itemId);
                         itemMetadata.put("bids", bids);
+                        
+                        // Add like count
+                        itemMetadata.put("likes", getLikeCount(itemId));
 
                         items.add(itemMetadata);
                     } catch (Exception e) {
@@ -521,6 +530,123 @@ public class S3StorageService {
         }
 
         return deletedCount;
+    }
+    
+    public void likeItem(String itemId, String email) throws IOException {
+        String likeKey = metadataPrefix + "likes/" + itemId + "/" + email.replace("@", "_at_") + ".json";
+        
+        Map<String, Object> likeData = new HashMap<>();
+        likeData.put("itemId", itemId);
+        likeData.put("email", email);
+        likeData.put("timestamp", System.currentTimeMillis());
+        
+        saveJsonToS3(likeKey, likeData);
+    }
+    
+    public void unlikeItem(String itemId, String email) throws IOException {
+        String likeKey = metadataPrefix + "likes/" + itemId + "/" + email.replace("@", "_at_") + ".json";
+        
+        try {
+            DeleteObjectRequest deleteRequest = DeleteObjectRequest.builder()
+                    .bucket(bucketName)
+                    .key(likeKey)
+                    .build();
+            s3Client.deleteObject(deleteRequest);
+        } catch (Exception e) {
+            // Like doesn't exist, ignore
+        }
+    }
+    
+    public int getLikeCount(String itemId) {
+        try {
+            ListObjectsV2Request listRequest = ListObjectsV2Request.builder()
+                    .bucket(bucketName)
+                    .prefix(metadataPrefix + "likes/" + itemId + "/")
+                    .build();
+            
+            ListObjectsV2Response listResponse = s3Client.listObjectsV2(listRequest);
+            return listResponse.contents().size();
+        } catch (Exception e) {
+            return 0;
+        }
+    }
+    
+    public boolean isLikedByUser(String itemId, String email) {
+        String likeKey = metadataPrefix + "likes/" + itemId + "/" + email.replace("@", "_at_") + ".json";
+        
+        try {
+            HeadObjectRequest headRequest = HeadObjectRequest.builder()
+                    .bucket(bucketName)
+                    .key(likeKey)
+                    .build();
+            s3Client.headObject(headRequest);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+    
+    public List<Map<String, Object>> getItemsByCreator(String email) {
+        List<Map<String, Object>> creatorItems = new ArrayList<>();
+        
+        try {
+            ListObjectsV2Request metadataRequest = ListObjectsV2Request.builder()
+                    .bucket(bucketName)
+                    .prefix(metadataPrefix + "items/")
+                    .build();
+            
+            ListObjectsV2Response metadataResponse = s3Client.listObjectsV2(metadataRequest);
+            
+            for (S3Object s3Object : metadataResponse.contents()) {
+                try {
+                    Map<String, Object> itemMetadata = getJsonFromS3(s3Object.key());
+                    String creatorEmail = (String) itemMetadata.get("email");
+                    
+                    if (email.equals(creatorEmail)) {
+                        String itemId = (String) itemMetadata.get("itemId");
+                        itemMetadata.put("url", getPresignedUrl(itemId));
+                        itemMetadata.put("likes", getLikeCount(itemId));
+                        itemMetadata.put("bids", getBidsForItem(itemId));
+                        creatorItems.add(itemMetadata);
+                    }
+                } catch (Exception e) {
+                    // Skip invalid metadata
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Error getting creator items: " + e.getMessage());
+        }
+        
+        return creatorItems;
+    }
+    
+    // Payment-related methods
+    public void savePaymentData(String orderId, Map<String, Object> paymentData) throws IOException {
+        String paymentKey = metadataPrefix + "payments/" + orderId + ".json";
+        saveJsonToS3(paymentKey, paymentData);
+    }
+    
+    public Map<String, Object> getPaymentData(String orderId) throws IOException {
+        String paymentKey = metadataPrefix + "payments/" + orderId + ".json";
+        try {
+            return getJsonFromS3(paymentKey);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+    
+    public void saveSaleData(String itemId, Map<String, Object> saleData) throws IOException {
+        String saleKey = metadataPrefix + "sales/" + itemId + ".json";
+        saveJsonToS3(saleKey, saleData);
+    }
+    
+    public Map<String, Object> getSaleData(String itemId) throws IOException {
+        String saleKey = metadataPrefix + "sales/" + itemId + ".json";
+        try {
+            return getJsonFromS3(saleKey);
+        } catch (Exception e) {
+            return null;
+        }
     }
 
 }

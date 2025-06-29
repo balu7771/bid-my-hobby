@@ -153,6 +153,138 @@ public class NotificationService {
     }
 
     public void sendSubscriptionConfirmation(String email) {
-
+        if (!emailEnabled) {
+            logger.info("Email notifications disabled. Would have sent subscription confirmation to: {}", email);
+            return;
+        }
+        
+        try {
+            sendEmail(email,
+                     "Subscription Confirmed - Bid My Hobby",
+                     "Thank you for subscribing to Bid My Hobby notifications!\n\n" +
+                     "You will now receive notifications about new items available for bidding.\n\n" +
+                     "Happy bidding!");
+            logger.info("Subscription confirmation email sent to: {}", email);
+        } catch (Exception e) {
+            logger.error("Failed to send subscription confirmation to {}: {}", email, e.getMessage());
+        }
+    }
+    
+    // Payment notification methods
+    public void notifyInitialPaymentComplete(String creatorEmail, String bidderEmail, String itemName, Map<String, Object> paymentData) {
+        if (!emailEnabled) {
+            logger.info("Email notifications disabled. Would have sent initial payment notification");
+            return;
+        }
+        
+        try {
+            // Notify creator
+            sendEmail(creatorEmail,
+                     "Initial Payment Received - " + itemName,
+                     "Great news! The bidder has made the initial payment for your item.\n\n" +
+                     "Item: " + itemName + "\n" +
+                     "Payment Amount: ₹" + paymentData.get("amount") + "\n" +
+                     "Bidder: " + maskEmail(bidderEmail) + "\n\n" +
+                     "Your item is now marked as 'Sale in Progress'. Please prepare for shipping.");
+            
+            // Notify bidder
+            sendEmail(bidderEmail,
+                     "Payment Confirmed - " + itemName,
+                     "Your initial payment has been confirmed!\n\n" +
+                     "Item: " + itemName + "\n" +
+                     "Payment Amount: ₹" + paymentData.get("amount") + "\n\n" +
+                     "The creator will prepare your item for shipping. You'll be notified when it's shipped.");
+                     
+        } catch (Exception e) {
+            logger.error("Failed to send initial payment notifications: {}", e.getMessage());
+        }
+    }
+    
+    public void notifyShippingPaymentComplete(String creatorEmail, String bidderEmail, String itemName, Map<String, Object> paymentData) {
+        if (!emailEnabled) {
+            logger.info("Email notifications disabled. Would have sent shipping payment notification");
+            return;
+        }
+        
+        try {
+            // Notify creator
+            sendEmail(creatorEmail,
+                     "Shipping Payment Received - " + itemName,
+                     "The bidder has made the shipping payment.\n\n" +
+                     "Item: " + itemName + "\n" +
+                     "Payment Amount: ₹" + paymentData.get("amount") + "\n\n" +
+                     "Please confirm delivery once the item reaches the bidder.");
+            
+            // Notify bidder
+            sendEmail(bidderEmail,
+                     "Shipping Payment Confirmed - " + itemName,
+                     "Your shipping payment has been confirmed!\n\n" +
+                     "Item: " + itemName + "\n" +
+                     "Payment Amount: ₹" + paymentData.get("amount") + "\n\n" +
+                     "Your item is on its way. You'll receive the final payment request upon delivery.");
+                     
+        } catch (Exception e) {
+            logger.error("Failed to send shipping payment notifications: {}", e.getMessage());
+        }
+    }
+    
+    public void notifyFinalPaymentComplete(String creatorEmail, String bidderEmail, String itemName, Map<String, Object> paymentData) {
+        if (!emailEnabled) {
+            logger.info("Email notifications disabled. Would have sent final payment notification");
+            return;
+        }
+        
+        try {
+            // Notify creator
+            sendEmail(creatorEmail,
+                     "Sale Completed - " + itemName,
+                     "Congratulations! Your sale has been completed.\n\n" +
+                     "Item: " + itemName + "\n" +
+                     "Final Payment: ₹" + paymentData.get("amount") + "\n\n" +
+                     "Thank you for using Bid My Hobby!");
+            
+            // Notify bidder
+            sendEmail(bidderEmail,
+                     "Purchase Complete - " + itemName,
+                     "Congratulations on your purchase!\n\n" +
+                     "Item: " + itemName + "\n" +
+                     "Final Payment: ₹" + paymentData.get("amount") + "\n\n" +
+                     "Enjoy your new item and thank you for using Bid My Hobby!");
+                     
+        } catch (Exception e) {
+            logger.error("Failed to send final payment notifications: {}", e.getMessage());
+        }
+    }
+    
+    public void notifyCreatorPlatformFeePayment(String creatorEmail, String itemName, Map<String, Object> paymentData) {
+        if (!emailEnabled) {
+            logger.info("Email notifications disabled. Would have sent creator platform fee notification");
+            return;
+        }
+        
+        try {
+            sendEmail(creatorEmail,
+                     "Platform Fee Payment Confirmed - " + itemName,
+                     "Thank you for your platform fee payment!\n\n" +
+                     "Item: " + itemName + "\n" +
+                     "Platform Fee: ₹" + paymentData.get("amount") + "\n\n" +
+                     "Your item is now fully active on our platform and available for bidding.\n\n" +
+                     "Thank you for using Bid My Hobby!");
+                     
+        } catch (Exception e) {
+            logger.error("Failed to send creator platform fee notification: {}", e.getMessage());
+        }
+    }
+    
+    private String maskEmail(String email) {
+        if (email == null) return null;
+        int atIndex = email.indexOf('@');
+        if (atIndex <= 2) return email;
+        String username = email.substring(0, atIndex);
+        String domain = email.substring(atIndex);
+        String maskedUsername = username.substring(0, 2) +
+                "*".repeat(Math.max(0, username.length() - 3)) +
+                username.substring(username.length() - 1);
+        return maskedUsername + domain;
     }
 }
