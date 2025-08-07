@@ -8,6 +8,8 @@ import PublicBidsModal from './PublicBidsModal';
 import { mockItems, getMockImageUrl } from './MockData';
 import './ai-description.css';
 import './public-bids.css';
+import './status-badges.css';
+import './management-buttons.css';
 
 // AI Description component
 function AiDescription({ description }) {
@@ -78,7 +80,7 @@ function ItemList() {
   }, []);
 
   const handleBidClick = (item) => {
-    if (item.status === 'SOLD') return; // Prevent bidding on sold items
+    if (item.status === 'SOLD' || item.status === 'SALE_IN_PROGRESS' || item.status === 'NOT_FOR_SALE') return; // Prevent bidding on sold, in-progress, or not-for-sale items
     setSelectedItem(item);
   };
 
@@ -181,6 +183,12 @@ function ItemList() {
               {item.status === 'ACTIVE' && (
                 <div className="status-badge active">ACTIVE</div>
               )}
+              {item.status === 'SALE_IN_PROGRESS' && (
+                <div className="status-badge sale-in-progress">SALE IN PROGRESS</div>
+              )}
+              {item.status === 'NOT_FOR_SALE' && (
+                <div className="status-badge not-for-sale">NOT FOR SALE</div>
+              )}
             </div>
             <div className="item-details">
               <h3>{item.name}</h3>
@@ -207,9 +215,11 @@ function ItemList() {
                 <button 
                   className="bid-button"
                   onClick={() => handleBidClick(item)}
-                  disabled={item.status === 'SOLD'}
+                  disabled={item.status === 'SOLD' || item.status === 'SALE_IN_PROGRESS' || item.status === 'NOT_FOR_SALE'}
                 >
-                  {item.status === 'SOLD' ? 'Sold' : 'Place Bid'}
+                  {item.status === 'SOLD' ? 'Sold' : 
+                   item.status === 'SALE_IN_PROGRESS' ? 'Sale in Progress' : 
+                   item.status === 'NOT_FOR_SALE' ? 'Not for Sale' : 'Place Bid'}
                 </button>
                 
                 <button 
@@ -239,6 +249,12 @@ function ItemList() {
                       onClick={() => handleActionClick(item, 'markSold')}
                     >
                       Mark as Sold
+                    </button>
+                    <button 
+                      className="mark-not-for-sale-button"
+                      onClick={() => handleActionClick(item, 'markNotForSale')}
+                    >
+                      Mark as Not for Sale
                     </button>
                     <button 
                       className="delete-button"

@@ -20,10 +20,15 @@ import com.bidmyhobby.service.AIService;
 import com.bidmyhobby.service.BidService;
 import com.bidmyhobby.service.CurrencyService;
 import com.bidmyhobby.service.ImageService;
+import com.bidmyhobby.service.KafkaProducerService;
+import com.bidmyhobby.service.MetadataService;
 import com.bidmyhobby.service.ModerationService;
 import com.bidmyhobby.service.NotificationService;
 import com.bidmyhobby.service.PaymentService;
 import com.bidmyhobby.service.S3StorageService;
+import com.bidmyhobby.model.ItemUploadEvent;
+
+import java.time.LocalDateTime;
 
 @RestController
 @RequestMapping("/api/bid")
@@ -52,6 +57,12 @@ public class BidController {
     
     @Autowired
     private CurrencyService currencyService;
+    
+    @Autowired
+    private KafkaProducerService kafkaProducerService;
+    
+    @Autowired
+    private MetadataService metadataService;
     
     @Value("${admin.secret.key:default-admin-key}")
     private String adminSecretKey;
@@ -101,11 +112,16 @@ public class BidController {
                 }
             }
             
-            // Check if item is sold or deleted
+            // Check if item is sold, deleted, or not for sale
             String status = (String) itemMetadata.get("status");
-            if ("SOLD".equals(status) || "DELETED".equals(status)) {
-                return ResponseEntity.badRequest().body(
-                    "This item is no longer available for bidding");
+            if ("SOLD".equals(status) || "DELETED".equals(status) || "NOT_FOR_SALE".equals(status)) {
+                if ("NOT_FOR_SALE".equals(status)) {
+                    return ResponseEntity.badRequest().body(
+                        "This item is not for sale and cannot receive bids");
+                } else {
+                    return ResponseEntity.badRequest().body(
+                        "This item is no longer available for bidding");
+                }
             }
             
             // All bids must be in INR and greater than base price
@@ -134,8 +150,9 @@ public class BidController {
             @RequestParam("name") String name,
             @RequestParam("description") String description,
             @RequestParam("email") String email,
-            @RequestParam("basePrice") BigDecimal basePrice,
+            @RequestParam(value = "basePrice", required = false) BigDecimal basePrice,
             @RequestParam("currency") String currency,
+            @RequestParam(value = "notForSale", defaultValue = "false") boolean notForSale,
             @RequestParam(value = "city", required = false) String city,
             @RequestParam(value = "instagram", required = false) String instagram,
             @RequestParam(value = "website", required = false) String website) {
@@ -172,35 +189,50 @@ public class BidController {
                     .body("The image does not appear to be a hobby item. Only hobby items can be uploaded.");
             }
             
-            // Check price limits - no items above 10000 INR
-            if (basePrice.compareTo(new BigDecimal("10000")) > 0) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(Map.of(
-                        "error", "Price limit exceeded",
-                        "reason", "Maximum price allowed is ₹10,000. Please reduce the price.",
-                        "maxPrice", 10000,
-                        "userPrice", basePrice
-                    ));
-            }
-            
-            // Validate price against AI estimate
-            Map<String, Object> priceValidation = aiService.validatePriceAndEstimate(basePrice, name, description);
-            
-            if (!(Boolean) priceValidation.get("isValid")) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(Map.of(
-                        "error", "Price validation failed",
-                        "reason", priceValidation.get("reason"),
-                        "aiEstimate", priceValidation.get("aiEstimate"),
-                        "userPrice", priceValidation.get("userPrice")
-                    ));
+            // Only validate price if not marked as "Not for Sale"
+            if (!notForSale) {
+                // Check if basePrice is provided when not marked as "Not for Sale"
+                if (basePrice == null) {
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(Map.of(
+                            "error", "Missing base price",
+                            "reason", "Base price is required when item is not marked as 'Not for Sale'."
+                        ));
+                }
+                
+                // Check price limits - no items above 10000 INR
+                if (basePrice.compareTo(new BigDecimal("10000")) > 0) {
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(Map.of(
+                            "error", "Price limit exceeded",
+                            "reason", "Maximum price allowed is ₹10,000. Please reduce the price.",
+                            "maxPrice", 10000,
+                            "userPrice", basePrice
+                        ));
+                }
+                
+                // Validate price against AI estimate
+                Map<String, Object> priceValidation = aiService.validatePriceAndEstimate(basePrice, name, description);
+                
+                if (!(Boolean) priceValidation.get("isValid")) {
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(Map.of(
+                            "error", "Price validation failed",
+                            "reason", priceValidation.get("reason"),
+                            "aiEstimate", priceValidation.get("aiEstimate"),
+                            "userPrice", priceValidation.get("userPrice")
+                        ));
+                }
             }
             
             // Get AI analysis for category
             Map<String, Object> aiAnalysis = aiService.analyzeItemForPriceAndCategory(file, description, name);
             
-            // Get currency conversions
-            Map<String, Double> currencyConversions = currencyService.convertFromINR(basePrice.doubleValue());
+            // Get currency conversions if not marked as "Not for Sale"
+            Map<String, Double> currencyConversions = new HashMap<>();
+            if (!notForSale && basePrice != null) {
+                currencyConversions = currencyService.convertFromINR(basePrice.doubleValue());
+            }
             
             // Add watermark to image with masked email
             String maskedEmail = imageService.maskEmail(email);
@@ -215,21 +247,30 @@ public class BidController {
             metadata.put("name", name);
             metadata.put("description", description);
             metadata.put("email", email);
-            metadata.put("basePrice", basePrice);
-            metadata.put("currency", "INR"); // Always INR for base price
-            metadata.put("currencyConversions", currencyConversions);
             metadata.put("timestamp", System.currentTimeMillis());
-            metadata.put("status", "ACTIVE");
             metadata.put("aiDescription", imageDescription);
             metadata.put("category", aiAnalysis.get("category"));
             metadata.put("estimatedPrice", aiAnalysis.get("estimatedPrice"));
             metadata.put("priceConfidence", aiAnalysis.get("confidence"));
+            
+            // Set status based on notForSale flag
+            if (notForSale) {
+                metadata.put("status", "NOT_FOR_SALE");
+                metadata.put("notForSaleAt", System.currentTimeMillis());
+            } else {
+                metadata.put("status", "ACTIVE");
+                metadata.put("basePrice", basePrice);
+                metadata.put("currency", "INR"); // Always INR for base price
+                metadata.put("currencyConversions", currencyConversions);
+            }
             if (city != null && !city.trim().isEmpty()) metadata.put("city", city.trim());
             if (instagram != null && !instagram.trim().isEmpty()) metadata.put("instagram", instagram.trim());
             if (website != null && !website.trim().isEmpty()) metadata.put("website", website.trim());
             
-            // Calculate platform fee for items between 3000-10000 INR
-            if (basePrice.compareTo(new BigDecimal("3000")) >= 0 && basePrice.compareTo(new BigDecimal("10000")) <= 0) {
+            // Calculate platform fee for items between 3000-10000 INR (only if not marked as "Not for Sale")
+            if (!notForSale && basePrice != null && 
+                basePrice.compareTo(new BigDecimal("3000")) >= 0 && 
+                basePrice.compareTo(new BigDecimal("10000")) <= 0) {
                 BigDecimal platformFee = basePrice.multiply(new BigDecimal("0.1")).setScale(0, java.math.RoundingMode.HALF_UP);
                 metadata.put("platformFee", platformFee);
                 metadata.put("requiresPlatformFee", true);
@@ -238,6 +279,17 @@ public class BidController {
             }
             
             s3StorageService.saveItemMetadata(itemId, metadata);
+            
+            // Also save to PostgreSQL
+            metadataService.saveFileMetadata(
+                itemId, 
+                "bid-my-hobby", 
+                file.getOriginalFilename(),
+                file.getContentType(),
+                file.getSize(),
+                metadata,
+                email
+            );
             
             // Automatically subscribe the uploader (using email as userId)
             try {
@@ -253,12 +305,33 @@ public class BidController {
             // Send notifications to all subscribed users (won't throw exception)
             notificationService.notifyAboutNewItem(itemId, name, description);
             
+            // Publish Kafka event for item upload
+            try {
+                ItemUploadEvent uploadEvent = new ItemUploadEvent(
+                    itemId,
+                    email, // creatorId
+                    maskedEmail, // creatorName (using masked email for privacy)
+                    name, // itemTitle
+                    description, // itemDescription
+                    s3StorageService.getImageUrl(itemId), // imageUrl
+                    notForSale ? null : basePrice.doubleValue(), // startingBid
+                    LocalDateTime.now(), // uploadTime
+                    (String) aiAnalysis.get("category") // category
+                );
+                kafkaProducerService.publishItemUploadEvent(uploadEvent);
+            } catch (Exception e) {
+                // Log but don't fail the upload if Kafka is unavailable
+                System.err.println("Failed to publish Kafka event: " + e.getMessage());
+            }
+            
             Map<String, Object> response = new HashMap<>();
             response.put("message", "Item uploaded successfully");
             response.put("itemId", itemId);
             
-            // Add platform fee information if applicable
-            if (basePrice.compareTo(new BigDecimal("3000")) >= 0 && basePrice.compareTo(new BigDecimal("10000")) <= 0) {
+            // Add platform fee information if applicable (only if not marked as "Not for Sale")
+            if (!notForSale && basePrice != null && 
+                basePrice.compareTo(new BigDecimal("3000")) >= 0 && 
+                basePrice.compareTo(new BigDecimal("10000")) <= 0) {
                 BigDecimal platformFee = basePrice.multiply(new BigDecimal("0.1")).setScale(0, java.math.RoundingMode.HALF_UP);
                 response.put("platformFee", platformFee);
                 response.put("requiresPlatformFee", true);

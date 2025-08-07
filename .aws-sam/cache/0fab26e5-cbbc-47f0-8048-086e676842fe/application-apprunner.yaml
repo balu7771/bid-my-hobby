@@ -1,0 +1,32 @@
+# Minimal configuration for App Runner
+server:
+  port: 8080
+
+spring:
+  application:
+    name: bid-my-hobby
+  main:
+    allow-bean-definition-overriding: true
+  ai:
+    openai:
+      api-key: ${SPRING_AI_OPENAI_API_KEY:dummy}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: always
+
+# Minimal AWS config
+aws:
+  s3:
+    region: ${AWS_REGION:ap-south-1}
+    bucket:
+      name: ${AWS_BUCKET_NAME:dummy}
+
+admin:
+  secret:
+    key: ${ADMIN_SECRET_KEY:dummy}

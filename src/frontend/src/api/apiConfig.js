@@ -31,6 +31,8 @@ const ENDPOINTS = {
   VERIFY_AND_GET_BIDS: (token) => `/api/bid/verifyAndGetBids/${token}`,
   GET_BIDS: (itemId) => `/api/bid/getBids?itemId=${encodeURIComponent(itemId)}`,
   GET_ITEM_WITH_BIDS: (itemId) => `/api/bid/getItemWithBids?itemId=${encodeURIComponent(itemId)}`,
+  APPROVE_BID: '/api/payment/approveBid',
+  CREATE_CREATOR_PAYMENT: '/api/payment/createCreatorPayment',
 };
 
 export { API_BASE_URL, DEFAULT_HEADERS, ENDPOINTS };

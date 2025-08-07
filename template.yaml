@@ -1,0 +1,93 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Bid My Hobby Serverless Application
+
+Globals:
+  Function:
+    Timeout: 30
+    MemorySize: 1024
+    Runtime: java17
+  Api:
+    Cors:
+      AllowMethods: "'GET,POST,PUT,DELETE,OPTIONS'"
+      AllowHeaders: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+      AllowOrigin: "'*'"
+
+Parameters:
+  OpenAIApiKey:
+    Type: String
+    NoEcho: true
+    Description: OpenAI API Key
+  AdminSecretKey:
+    Type: String
+    NoEcho: true
+    Description: Admin Secret Key
+  S3BucketName:
+    Type: String
+    Default: bidmyhobby-images-010526286593-010526286593
+    Description: S3 Bucket Name
+
+Resources:
+  BidMyHobbyFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: .
+      Handler: com.bidmyhobby.util.StreamLambdaHandler::handleRequest
+      Environment:
+        Variables:
+          SPRING_AI_OPENAI_API_KEY: !Ref OpenAIApiKey
+          ADMIN_SECRET_KEY: !Ref AdminSecretKey
+          AWS_BUCKET_NAME: !Ref S3BucketName
+          AWS_REGION: !Ref AWS::Region
+          AWS_LAMBDA_WEB_ADAPTER_PORT: "8080"
+      Layers:
+        - arn:aws:lambda:ap-south-1:753240598075:layer:LambdaAdapterLayerX86:22
+      Events:
+        ProxyResource:
+          Type: Api
+          Properties:
+            Path: /{proxy+}
+            Method: ANY
+        RootResource:
+          Type: Api
+          Properties:
+            Path: /
+            Method: ANY
+        OptionsResource:
+          Type: Api
+          Properties:
+            Path: /{proxy+}
+            Method: OPTIONS
+        RootOptionsResource:
+          Type: Api
+          Properties:
+            Path: /
+            Method: OPTIONS
+      Policies:
+        - S3FullAccessPolicy:
+            BucketName: !Ref S3BucketName
+        - SESCrudPolicy:
+            IdentityName: "*"
+
+  S3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Ref S3BucketName
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: false
+        BlockPublicPolicy: false
+        IgnorePublicAcls: false
+        RestrictPublicBuckets: false
+      CorsConfiguration:
+        CorsRules:
+          - AllowedHeaders: ['*']
+            AllowedMethods: [GET, PUT, POST, DELETE, HEAD]
+            AllowedOrigins: ['*']
+
+Outputs:
+  BidMyHobbyApi:
+    Description: "API Gateway endpoint URL"
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/"
+  S3BucketName:
+    Description: "S3 Bucket for images"
+    Value: !Ref S3Bucket

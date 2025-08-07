@@ -17,6 +17,7 @@
 		<java.version>17</java.version>
 		<spring-ai.version>1.0.0-M8</spring-ai.version>
 		<aws.sdk.version>2.25.11</aws.sdk.version>
+		<frontend.skip>true</frontend.skip>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -73,6 +74,8 @@
 			<artifactId>spring-dotenv</artifactId>
 			<version>3.0.0</version>
 		</dependency>
+
+
 		
 		<!-- RazorPay SDK -->
 		<dependency>
@@ -96,6 +99,31 @@
 			<groupId>org.json</groupId>
 			<artifactId>json</artifactId>
 			<version>20240303</version>
+		</dependency>
+		
+		<!-- Spring Kafka -->
+		<dependency>
+			<groupId>org.springframework.kafka</groupId>
+			<artifactId>spring-kafka</artifactId>
+		</dependency>
+		
+		<!-- Spring Data JPA -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-jpa</artifactId>
+		</dependency>
+		
+		<!-- PostgreSQL Driver -->
+		<dependency>
+			<groupId>org.postgresql</groupId>
+			<artifactId>postgresql</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+		
+		<!-- HikariCP -->
+		<dependency>
+			<groupId>com.zaxxer</groupId>
+			<artifactId>HikariCP</artifactId>
 		</dependency>
 	</dependencies>
 	<dependencyManagement>
@@ -122,45 +150,45 @@
 							<artifactId>lombok</artifactId>
 						</exclude>
 					</excludes>
+					<layout>JAR</layout>
 				</configuration>
 			</plugin>
 			<plugin>
 				<groupId>com.github.eirslett</groupId>
 				<artifactId>frontend-maven-plugin</artifactId>
-				<version>1.12.1</version>
+				<version>1.15.0</version>
 				<configuration>
+					<skip>${frontend.skip}</skip>
 					<workingDirectory>src/frontend</workingDirectory>
 					<installDirectory>target</installDirectory>
 				</configuration>
 				<executions>
 					<execution>
-						<id>install node and yarn</id>
+						<id>install node and npm</id>
 						<goals>
-							<goal>install-node-and-yarn</goal>
+							<goal>install-node-and-npm</goal>
 						</goals>
 						<configuration>
-							<!--<nodeVersion>v18.16.0</nodeVersion>
-							<yarnVersion>v1.22.19</yarnVersion>-->
 							<nodeVersion>v20.10.0</nodeVersion>
-							<yarnVersion>v1.22.21</yarnVersion>
+							<npmVersion>10.2.3</npmVersion>
 						</configuration>
 					</execution>
 					<execution>
-						<id>yarn install</id>
+						<id>npm install</id>
 						<goals>
-							<goal>yarn</goal>
+							<goal>npm</goal>
 						</goals>
 						<configuration>
 							<arguments>install</arguments>
 						</configuration>
 					</execution>
 					<execution>
-						<id>yarn build</id>
+						<id>npm build</id>
 						<goals>
-							<goal>yarn</goal>
+							<goal>npm</goal>
 						</goals>
 						<configuration>
-							<arguments>build</arguments>
+							<arguments>run build</arguments>
 						</configuration>
 					</execution>
 				</executions>

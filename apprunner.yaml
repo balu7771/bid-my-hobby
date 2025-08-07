@@ -1,0 +1,21 @@
+version: 1.0
+runtime: docker
+build:
+  commands:
+    build:
+      - echo "No build commands needed - using pre-built image"
+run:
+  runtime-version: latest
+  command: java -jar app.jar
+  network:
+    port: 8080
+    env: PORT
+  env:
+    - name: PORT
+      value: "8080"
+    - name: SPRING_AI_OPENAI_API_KEY
+      value: "your-openai-key"
+    - name: ADMIN_SECRET_KEY  
+      value: "your-admin-secret"
+    - name: AWS_BUCKET_NAME
+      value: "bidmyhobby-images-010526286593-010526286593"

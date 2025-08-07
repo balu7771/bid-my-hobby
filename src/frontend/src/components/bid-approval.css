@@ -1,0 +1,87 @@
+.bid-item {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  border-bottom: 1px solid #eee;
+  margin-bottom: 8px;
+  background-color: #f9f9f9;
+  border-radius: 6px;
+}
+
+.bid-amount {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #2c3e50;
+}
+
+.bid-details {
+  flex: 1;
+  margin-left: 15px;
+}
+
+.bid-user {
+  font-weight: 500;
+}
+
+.bid-time {
+  font-size: 0.8rem;
+  color: #7f8c8d;
+}
+
+.bid-actions {
+  margin-left: 10px;
+}
+
+.approve-bid-button {
+  background-color: #27ae60;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 16px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: bold;
+  transition: background-color 0.2s;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  display: inline-block;
+}
+
+.approve-bid-button:hover {
+  background-color: #2ecc71;
+}
+
+.bid-approval-details {
+  margin-bottom: 20px;
+}
+
+.bid-info {
+  background-color: #f8f9fa;
+  border-radius: 6px;
+  padding: 15px;
+  margin: 15px 0;
+}
+
+.bid-info-row {
+  display: flex;
+  margin-bottom: 8px;
+}
+
+.bid-info-label {
+  font-weight: bold;
+  width: 100px;
+}
+
+.platform-fee-notice {
+  background-color: #fff8e1;
+  border-left: 4px solid #ffc107;
+  padding: 10px 15px;
+  margin: 15px 0;
+  border-radius: 0 4px 4px 0;
+}
+
+.platform-fee-notice p {
+  margin: 5px 0;
+  font-size: 0.9rem;
+}

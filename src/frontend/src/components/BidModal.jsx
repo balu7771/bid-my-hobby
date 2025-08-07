@@ -22,6 +22,12 @@ function BidModal({ item, onClose, onBidPlaced }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
+    // Check if item is in SALE_IN_PROGRESS status
+    if (item.status === 'SALE_IN_PROGRESS') {
+      setError('This item is currently in a sale process and not accepting bids');
+      return;
+    }
+    
     if (!bidAmount || isNaN(parseFloat(bidAmount)) || parseFloat(bidAmount) <= 0) {
       setError('Please enter a valid bid amount');
       return;

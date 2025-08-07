@@ -1,0 +1,107 @@
+{
+  "name": "bid_payment_workflow",
+  "description": "Handles bid payment processing with creator approval",
+  "version": 1,
+  "tasks": [
+    {
+      "name": "validate_bid",
+      "taskReferenceName": "validate_bid_ref",
+      "type": "SIMPLE",
+      "inputParameters": {
+        "bidId": "${workflow.input.bidId}",
+        "amount": "${workflow.input.amount}",
+        "userId": "${workflow.input.userId}"
+      }
+    },
+    {
+      "name": "hold_payment",
+      "taskReferenceName": "hold_payment_ref",
+      "type": "SIMPLE",
+      "inputParameters": {
+        "paymentMethod": "${workflow.input.paymentMethod}",
+        "amount": "${workflow.input.amount}",
+        "bidId": "${workflow.input.bidId}"
+      }
+    },
+    {
+      "name": "notify_creator",
+      "taskReferenceName": "notify_creator_ref",
+      "type": "SIMPLE",
+      "inputParameters": {
+        "creatorEmail": "${workflow.input.creatorEmail}",
+        "bidDetails": "${workflow.input.bidDetails}",
+        "approvalToken": "${workflow.input.approvalToken}"
+      }
+    },
+    {
+      "name": "wait_for_approval",
+      "taskReferenceName": "wait_for_approval_ref",
+      "type": "HUMAN",
+      "inputParameters": {
+        "approvalToken": "${workflow.input.approvalToken}",
+        "timeoutHours": 48
+      }
+    },
+    {
+      "name": "process_decision",
+      "taskReferenceName": "process_decision_ref",
+      "type": "DECISION",
+      "caseValueParam": "decision",
+      "decisionCases": {
+        "APPROVED": [
+          {
+            "name": "capture_payment",
+            "taskReferenceName": "capture_payment_ref",
+            "type": "SIMPLE",
+            "inputParameters": {
+              "paymentId": "${hold_payment_ref.output.paymentId}",
+              "amount": "${workflow.input.amount}"
+            }
+          },
+          {
+            "name": "notify_bid_success",
+            "taskReferenceName": "notify_bid_success_ref",
+            "type": "SIMPLE",
+            "inputParameters": {
+              "bidderEmail": "${workflow.input.bidderEmail}",
+              "creatorEmail": "${workflow.input.creatorEmail}",
+              "bidDetails": "${workflow.input.bidDetails}"
+            }
+          }
+        ],
+        "REJECTED": [
+          {
+            "name": "refund_payment",
+            "taskReferenceName": "refund_payment_ref",
+            "type": "SIMPLE",
+            "inputParameters": {
+              "paymentId": "${hold_payment_ref.output.paymentId}",
+              "amount": "${workflow.input.amount}"
+            }
+          },
+          {
+            "name": "notify_bid_rejected",
+            "taskReferenceName": "notify_bid_rejected_ref",
+            "type": "SIMPLE",
+            "inputParameters": {
+              "bidderEmail": "${workflow.input.bidderEmail}",
+              "bidDetails": "${workflow.input.bidDetails}"
+            }
+          }
+        ]
+      },
+      "defaultCase": [
+        {
+          "name": "handle_timeout",
+          "taskReferenceName": "handle_timeout_ref",
+          "type": "SIMPLE",
+          "inputParameters": {
+            "paymentId": "${hold_payment_ref.output.paymentId}",
+            "bidId": "${workflow.input.bidId}"
+          }
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 2
+}

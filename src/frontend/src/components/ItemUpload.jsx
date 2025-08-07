@@ -19,6 +19,7 @@ function ItemUpload() {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [paymentData, setPaymentData] = useState(null);
   const [uploadedItemId, setUploadedItemId] = useState(null);
+  const [notForSale, setNotForSale] = useState(false);
 
   // Auto-populate email from localStorage
   useEffect(() => {
@@ -28,18 +29,52 @@ function ItemUpload() {
     }
   }, []);
 
-  const handleFileChange = (e) => {
+  const compressImage = (file, maxWidth = 800, quality = 0.8) => {
+    return new Promise((resolve) => {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      const img = new Image();
+      
+      img.onload = () => {
+        // Calculate new dimensions
+        let { width, height } = img;
+        if (width > maxWidth) {
+          height = (height * maxWidth) / width;
+          width = maxWidth;
+        }
+        
+        canvas.width = width;
+        canvas.height = height;
+        
+        // Draw and compress
+        ctx.drawImage(img, 0, 0, width, height);
+        canvas.toBlob(resolve, 'image/jpeg', quality);
+      };
+      
+      img.src = URL.createObjectURL(file);
+    });
+  };
+
+  const handleFileChange = async (e) => {
     const selectedFile = e.target.files[0];
-    setFile(selectedFile);
     
-    // Create preview for the selected image
     if (selectedFile) {
+      // Compress image if it's too large
+      let processedFile = selectedFile;
+      if (selectedFile.size > 500000) { // 500KB
+        processedFile = await compressImage(selectedFile);
+      }
+      
+      setFile(processedFile);
+      
+      // Create preview
       const reader = new FileReader();
       reader.onloadend = () => {
         setPreview(reader.result);
       };
-      reader.readAsDataURL(selectedFile);
+      reader.readAsDataURL(processedFile);
     } else {
+      setFile(null);
       setPreview(null);
     }
   };
@@ -47,16 +82,18 @@ function ItemUpload() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (!file || !title || !email || !basePrice || !currency) {
+    if (!file || !title || !email || (!basePrice && !notForSale) || !currency) {
       setMessage('Please fill all required fields and select an image');
       return;
     }
 
-    // Check price limits
-    const price = parseFloat(basePrice);
-    if (price > 10000) {
-      setMessage('Error: Maximum price allowed is ₹10,000. Please reduce the price.');
-      return;
+    // Check price limits if not marked as "Not for Sale"
+    if (!notForSale) {
+      const price = parseFloat(basePrice);
+      if (price > 10000) {
+        setMessage('Error: Maximum price allowed is ₹10,000. Please reduce the price.');
+        return;
+      }
     }
 
     setLoading(true);
@@ -73,12 +110,17 @@ function ItemUpload() {
     // According to Swagger, these are query parameters
     const queryParams = new URLSearchParams({
       name: title,
-      description: description,
+      description: description || '',
       userId: 'user123', // In a real app, this would come from authentication
       email: email,
-      basePrice: basePrice,
-      currency: currency
+      currency: currency,
+      notForSale: notForSale.toString()
     });
+    
+    // Only add basePrice if not marked as "Not for Sale"
+    if (!notForSale) {
+      queryParams.append('basePrice', basePrice);
+    }
     
     if (city.trim()) queryParams.append('city', city.trim());
     if (instagram.trim()) queryParams.append('instagram', instagram.trim());
@@ -103,23 +145,15 @@ function ItemUpload() {
       }
       
       if (response.ok) {
-        let responseData;
-        try {
-          responseData = await response.json();
-        } catch (e) {
-          responseData = { message: 'Item uploaded successfully', itemId: 'unknown' };
-        }
-        const price = parseFloat(basePrice);
+        setUploadedItemId(data.itemId || 'unknown');
         
-        setUploadedItemId(responseData.itemId);
-        
-        // Check if platform fee is required (3000-10000 INR)
-        if (responseData.requiresPlatformFee) {
-          setMessage(`Item uploaded successfully! ${responseData.feeMessage}`);
+        // Check if platform fee is required (3000-10000 INR) and not marked as "Not for Sale"
+        if (data.requiresPlatformFee && !notForSale) {
+          setMessage(`Item uploaded successfully! ${data.feeMessage}`);
           
           // Show payment modal for platform fee
           setTimeout(() => {
-            handlePlatformFeePayment(responseData.itemId);
+            handlePlatformFeePayment(data.itemId);
           }, 2000);
         } else {
           setMessage('Item uploaded successfully!');
@@ -155,6 +189,7 @@ function ItemUpload() {
     setWebsite('');
     setFile(null);
     setPreview(null);
+    setNotForSale(false);
   };
 
   const handlePlatformFeePayment = async (itemId) => {
@@ -219,8 +254,23 @@ function ItemUpload() {
           />
         </div>
         
+        <div className="form-group not-for-sale-checkbox">
+          <label>
+            <input
+              type="checkbox"
+              checked={notForSale}
+              onChange={(e) => setNotForSale(e.target.checked)}
+            />
+            Not for Sale (Display Only)
+          </label>
+          <small className="form-note">
+            Check this if you want to showcase your hobby item without selling it.
+            Bidding will be disabled for this item.
+          </small>
+        </div>
+        
         <div className="form-group">
-          <label htmlFor="basePrice">Base Price (INR only): *</label>
+          <label htmlFor="basePrice">Base Price (INR only): {notForSale ? '' : '*'}</label>
           <input
             type="number"
             id="basePrice"
@@ -230,11 +280,14 @@ function ItemUpload() {
             min="100"
             max="10000"
             step="50"
-            required
+            required={!notForSale}
+            disabled={notForSale}
           />
           <small className="form-note">
-            Note: Maximum price allowed is ₹10,000. Items between ₹3,000-₹10,000 require a 10% platform fee.
-            Price will be validated against AI estimate. USD & GBP equivalents will be shown for reference.
+            {notForSale ? 
+              'Base price not required for items marked as "Not for Sale".' :
+              'Note: Maximum price allowed is ₹10,000. Items between ₹500-₹10,000 require a 5% platform fee. Price will be validated against AI estimate. USD & GBP equivalents will be shown for reference.'
+            }
           </small>
         </div>
         
@@ -269,7 +322,7 @@ function ItemUpload() {
             id="city"
             value={city}
             onChange={(e) => setCity(e.target.value)}
-            placeholder="Your city"
+            placeholder="Your city or area where your hobby item present."
           />
         </div>
         
@@ -306,6 +359,17 @@ function ItemUpload() {
             <div className="upload-buttons">
               <input
                 type="file"
+                id="gallery"
+                accept="image/*"
+                onChange={handleFileChange}
+                className="file-input desktop-gallery"
+              />
+              <label htmlFor="gallery" className="file-input-label desktop-primary">
+                📁 Choose from Gallery
+              </label>
+              
+              <input
+                type="file"
                 id="camera"
                 accept="image/*"
                 onChange={handleFileChange}
@@ -315,25 +379,13 @@ function ItemUpload() {
               <label htmlFor="camera" className="camera-input-label mobile-primary">
                 📷 Take Photo
               </label>
-              
-              <input
-                type="file"
-                id="gallery"
-                accept="image/*"
-                onChange={handleFileChange}
-                className="file-input desktop-gallery"
-                required
-              />
-              <label htmlFor="gallery" className="file-input-label desktop-primary">
-                📁 Choose from Gallery
-              </label>
             </div>
             <span className="file-name">
               {file ? file.name : 'No file selected'}
             </span>
           </div>
           <small className="form-note">
-            Note: All images are analyzed by AI to ensure they're appropriate hobby items.
+            Note: Images are automatically compressed for faster upload. All images are analyzed by AI to ensure they're appropriate hobby items.
           </small>
           
           {preview && (

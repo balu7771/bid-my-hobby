@@ -1,0 +1,20 @@
+FROM openjdk:17-jdk-slim
+
+WORKDIR /app
+
+# Copy the JAR file
+COPY target/bid-my-hobby-0.0.1-SNAPSHOT.jar app.jar
+
+# Expose port
+EXPOSE 8080
+
+# Set environment variables
+ENV SPRING_PROFILES_ACTIVE=prod
+ENV SERVER_PORT=8080
+ENV PORT=8080
+
+# Add debugging
+RUN echo "Testing Java version:" && java -version
+
+# Run the application with verbose output
+ENTRYPOINT ["java", "-Dserver.port=8080", "-Dlogging.level.root=INFO", "-jar", "app.jar"]

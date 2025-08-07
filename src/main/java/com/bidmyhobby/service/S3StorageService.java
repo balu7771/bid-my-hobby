@@ -489,6 +489,10 @@ public class S3StorageService {
         // Use direct URL for public objects
         return "https://" + bucketName + ".s3.ap-south-1.amazonaws.com/" + key;
     }
+    
+    public String getImageUrl(String key) {
+        return getPresignedUrl(key);
+    }
 
     /**
      * Deletes all items from the platform (admin only)

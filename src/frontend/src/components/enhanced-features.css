@@ -1,0 +1,466 @@
+/* Enhanced Features CSS */
+
+/* Creator Mode Styles */
+.items-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.creator-controls {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.creator-toggle {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 25px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.creator-toggle:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+}
+
+.creator-toggle.active {
+  background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+}
+
+.creator-email {
+  background: rgba(102, 126, 234, 0.1);
+  padding: 8px 15px;
+  border-radius: 20px;
+  font-size: 0.9em;
+  color: #667eea;
+  font-weight: 500;
+}
+
+/* Filter Styles */
+.filters-container {
+  background: white;
+  padding: 20px;
+  border-radius: 15px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  margin-bottom: 25px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  align-items: end;
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 150px;
+}
+
+.filter-group label {
+  font-weight: 600;
+  color: #333;
+  font-size: 0.9em;
+}
+
+.filter-group select,
+.filter-group input {
+  padding: 8px 12px;
+  border: 2px solid #e1e5e9;
+  border-radius: 8px;
+  font-size: 0.9em;
+  transition: border-color 0.3s ease;
+}
+
+.filter-group select:focus,
+.filter-group input:focus {
+  outline: none;
+  border-color: #667eea;
+}
+
+.price-range {
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+}
+
+.price-range input {
+  width: 80px;
+}
+
+.price-range span {
+  font-weight: bold;
+  color: #666;
+}
+
+/* Like Button Styles */
+.item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 10px;
+}
+
+.item-actions-top {
+  display: flex;
+  gap: 10px;
+}
+
+.like-button {
+  background: none;
+  border: 2px solid #ff6b6b;
+  color: #ff6b6b;
+  padding: 5px 12px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 0.9em;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.like-button:hover {
+  background: #ff6b6b;
+  color: white;
+  transform: translateY(-1px);
+}
+
+.like-button.liked {
+  background: #ff6b6b;
+  color: white;
+}
+
+/* Category Tag Styles */
+.item-category {
+  margin-bottom: 10px;
+}
+
+.category-tag {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 4px 12px;
+  border-radius: 15px;
+  font-size: 0.8em;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* AI Price Estimate Styles */
+.ai-price-estimate {
+  background: linear-gradient(135deg, #ffeaa7 0%, #fab1a0 100%);
+  color: #2d3436;
+  padding: 8px 12px;
+  border-radius: 10px;
+  font-size: 0.9em;
+  font-weight: 600;
+  margin: 10px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ai-icon {
+  font-size: 1.1em;
+}
+
+/* Status Badge Updates */
+.status-badge.not-for-sale {
+  background: linear-gradient(135deg, #fd79a8 0%, #fdcb6e 100%);
+  color: white;
+}
+
+.item-not-for-sale {
+  opacity: 0.8;
+  border: 2px solid #fd79a8;
+}
+
+/* Management Button Updates */
+.not-for-sale-button {
+  background: linear-gradient(135deg, #fd79a8 0%, #fdcb6e 100%);
+  color: white;
+  border: none;
+  padding: 8px 15px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.9em;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.not-for-sale-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 3px 10px rgba(253, 121, 168, 0.3);
+}
+
+/* Chat Profile Styles */
+.chat-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 2px solid #e1e5e9;
+}
+
+.current-profile {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 10px 20px;
+  border-radius: 25px;
+  font-weight: 600;
+}
+
+.profile-avatar {
+  font-size: 1.2em;
+}
+
+.profile-switcher {
+  background: #f8f9fa;
+  padding: 15px;
+  border-radius: 10px;
+  margin-bottom: 20px;
+}
+
+.profile-switcher p {
+  margin: 0 0 10px 0;
+  font-weight: 600;
+  color: #333;
+}
+
+.profile-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.profile-button {
+  background: white;
+  border: 2px solid #667eea;
+  color: #667eea;
+  padding: 8px 15px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 0.9em;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.profile-button:hover {
+  background: #667eea;
+  color: white;
+  transform: translateY(-1px);
+}
+
+.message-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 5px;
+  font-size: 0.9em;
+  color: #666;
+}
+
+.message-avatar {
+  font-size: 1.1em;
+}
+
+.message-sender {
+  font-weight: 600;
+}
+
+.system-message {
+  text-align: center;
+  margin: 15px 0;
+}
+
+.system-message .message-bubble {
+  background: #e9ecef;
+  color: #6c757d;
+  font-style: italic;
+  font-size: 0.9em;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .items-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .creator-controls {
+    justify-content: space-between;
+  }
+  
+  .filters-container {
+    flex-direction: column;
+    gap: 15px;
+  }
+  
+  .filter-group {
+    min-width: auto;
+  }
+  
+  .price-range {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+  
+  .price-range input {
+    width: 100%;
+  }
+  
+  .profile-buttons {
+    justify-content: center;
+  }
+  
+  .item-header {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .item-actions-top {
+    justify-content: flex-start;
+  }
+}
+
+/* Animation for new features */
+/* Email Setter Styles */
+.email-setter {
+  display: flex;
+  align-items: center;
+  position: relative;
+  z-index: 1000;
+}
+
+.email-form {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.email-input {
+  padding: 8px 12px;
+  border: 2px solid #667eea;
+  border-radius: 20px;
+  font-size: 0.9em;
+  min-width: 200px;
+  background: white !important;
+  color: #333 !important;
+  pointer-events: auto !important;
+  z-index: 999;
+  position: relative;
+}
+
+.email-input:focus {
+  outline: none;
+  border-color: #764ba2;
+}
+
+.email-submit {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.email-display {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(102, 126, 234, 0.1);
+  padding: 8px 15px;
+  border-radius: 20px;
+}
+
+.email-text {
+  color: #667eea;
+  font-weight: 500;
+}
+
+.edit-email-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.1em;
+  pointer-events: auto !important;
+  z-index: 999;
+  padding: 4px;
+}
+
+/* Creator Info Styles */
+.creator-info {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 10px 0;
+  padding: 8px;
+  background: rgba(102, 126, 234, 0.05);
+  border-radius: 8px;
+}
+
+.creator-city {
+  color: #666;
+  font-size: 0.9em;
+  font-weight: 500;
+}
+
+.creator-link {
+  color: #667eea;
+  text-decoration: none;
+  font-size: 0.9em;
+  font-weight: 500;
+  transition: color 0.3s ease;
+}
+
+.creator-link:hover {
+  color: #764ba2;
+  text-decoration: underline;
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.filters-container,
+.creator-controls,
+.profile-switcher {
+  animation: slideInUp 0.5s ease-out;
+}
+
+/* Hover effects for better UX */
+.item-card:hover .like-button {
+  transform: scale(1.05);
+}
+
+.item-card:hover .category-tag {
+  transform: scale(1.02);
+}
+
+.item-card:hover .ai-price-estimate {
+  transform: scale(1.02);
+}

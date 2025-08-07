@@ -53,6 +53,14 @@ function ItemActionModal({ item, actionType, onClose, onActionComplete }) {
         response = await fetch(ENDPOINTS.MARK_AS_SOLD(filename) + `?${queryParams}`, {
           method: 'POST'
         });
+      } else if (actionType === 'markNotForSale') {
+        // Extract just the filename part from the path
+        const fullPath = item.itemId;
+        const filename = fullPath.split('/').pop();
+        console.log('Marking item as not for sale with ID:', filename, 'from full path:', fullPath);
+        response = await fetch(ENDPOINTS.MARK_NOT_FOR_SALE(filename) + `?${queryParams}`, {
+          method: 'POST'
+        });
       }
 
       if (!response.ok) {
@@ -78,11 +86,21 @@ function ItemActionModal({ item, actionType, onClose, onActionComplete }) {
     }
   };
 
-  const actionTitle = actionType === 'delete' ? 'Delete Item' : 'Mark Item as Sold';
-  const actionButtonText = actionType === 'delete' ? 'Delete' : 'Mark as Sold';
-  const actionDescription = actionType === 'delete' 
-    ? 'This will permanently remove your item from the marketplace.' 
-    : 'This will mark your item as sold and prevent further bidding.';
+  let actionTitle, actionButtonText, actionDescription;
+  
+  if (actionType === 'delete') {
+    actionTitle = 'Delete Item';
+    actionButtonText = 'Delete';
+    actionDescription = 'This will permanently remove your item from the marketplace.';
+  } else if (actionType === 'markSold') {
+    actionTitle = 'Mark Item as Sold';
+    actionButtonText = 'Mark as Sold';
+    actionDescription = 'This will mark your item as sold and prevent further bidding.';
+  } else if (actionType === 'markNotForSale') {
+    actionTitle = 'Mark Item as Not for Sale';
+    actionButtonText = 'Mark as Not for Sale';
+    actionDescription = 'This will mark your item as not for sale and disable bidding, but keep it visible in the marketplace.';
+  }
 
   return (
     <div className="modal-backdrop">

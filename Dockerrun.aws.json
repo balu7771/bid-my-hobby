@@ -1,0 +1,15 @@
+{
+  "AWSEBDockerrunVersion": "1",
+  "Image": {
+    "Name": "bid-my-hobby:latest",
+    "Update": "true"
+  },
+  "Ports": [
+    {
+      "ContainerPort": 8080,
+      "HostPort": 5000
+    }
+  ],
+  "Volumes": [],
+  "Logging": "/var/log/app"
+}
